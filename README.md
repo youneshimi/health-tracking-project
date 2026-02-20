@@ -1,18 +1,15 @@
 # Health Tracking Platform
 
-## Stack
-- Front: React
-- Back: Node.js (Express)
-- DB: MySQL (phpMyAdmin)
+## 🧱 Stack
+- Frontend: React
+- Backend: Node.js (Express)
+- Database: MySQL
+- DevOps: Docker & Docker Compose
+- DB Admin: phpMyAdmin
 
-## Run (local)
-### Backend
-cd backend
-cp .env.example .env
-npm install
-npm run dev
+---
 
-### Frontend
-cd frontend
-npm install
-npm start
+## 🚀 Run with Docker (recommended)
+
+```bash
+docker compose up --build
