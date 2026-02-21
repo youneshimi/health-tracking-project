@@ -30,13 +30,8 @@ services:
     build: ./backend
     container_name: htp-backend
     restart: unless-stopped
-    environment:
-      PORT: 4000
-      DB_HOST: mysql
-      DB_USER: app
-      DB_PASSWORD: app
-      DB_NAME: health_db
-      DB_PORT: 3306
+    env_file:
+      - ./backend/.env
     ports:
       - "4000:4000"
     depends_on:
