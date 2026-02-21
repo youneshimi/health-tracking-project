@@ -13,6 +13,12 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
       - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -proot --silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
@@ -24,7 +30,8 @@ services:
     ports:
       - "8080:80"
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
 
   backend:
     build: ./backend
@@ -35,7 +42,19 @@ services:
     ports:
       - "4000:4000"
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      # ✅ pas besoin de wget/curl → node est toujours dispo
+      test:
+        [
+          "CMD-SHELL",
+          'node -e "require(''http'').get(''http://localhost:4000/health'', r=>process.exit(r.statusCode===200?0:1)).on(''error'',()=>process.exit(1))"',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 15s
 
   frontend:
     build: ./frontend
@@ -43,10 +62,24 @@ services:
     restart: unless-stopped
     environment:
       REACT_APP_API_URL: http://localhost:4000
+      HOST: 0.0.0.0
+      PORT: 3000
     ports:
       - "3000:3000"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    healthcheck:
+      # ✅ test TCP simple (pas besoin de wget)
+      test:
+        [
+          "CMD-SHELL",
+          'node -e "require(''net'').connect(3000,''127.0.0.1'').on(''connect'',()=>process.exit(0)).on(''error'',()=>process.exit(1))"',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 25s
 
 volumes:
   mysql_data:
