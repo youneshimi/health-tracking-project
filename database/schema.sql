@@ -20,7 +20,7 @@ CREATE TABLE users (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL COMMENT='Hashed password (bcrypt)',
+    password_hash VARCHAR(255) NOT NULL COMMENT 'Hashed password (bcrypt)',
     first_name VARCHAR(50),
     last_name VARCHAR(50),
     age INT CHECK (age >= 18 AND age <= 120),
@@ -33,7 +33,7 @@ CREATE TABLE users (
     INDEX idx_username (username),
     INDEX idx_email (email)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='User profiles for health tracking application';
+COMMENT 'User profiles for health tracking application';
 
 -- ========================================
 -- TABLE: activities
@@ -60,7 +60,7 @@ CREATE TABLE activities (
     INDEX idx_timestamp (timestamp),
     INDEX idx_activity_type (activity_type)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Physical activities performed by users';
+COMMENT 'Physical activities performed by users';
 
 -- ========================================
 -- TABLE: sleep_records
@@ -89,7 +89,7 @@ CREATE TABLE sleep_records (
     INDEX idx_user_id (user_id),
     INDEX idx_sleep_date (sleep_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Daily sleep records with quality metrics';
+COMMENT 'Daily sleep records with quality metrics';
 
 -- ========================================
 -- TABLE: heart_rate
@@ -110,7 +110,7 @@ CREATE TABLE heart_rate (
     INDEX idx_timestamp (timestamp),
     INDEX idx_context (context)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Heart rate measurements in different contexts';
+COMMENT 'Heart rate measurements in different contexts';
 
 -- ========================================
 -- TABLE: anomalies
@@ -147,7 +147,7 @@ CREATE TABLE anomalies (
     INDEX idx_severity (severity),
     INDEX idx_resolved (resolved)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-COMMENT='Detected health anomalies and alerts';
+COMMENT 'Detected health anomalies and alerts';
 
 -- ========================================
 -- VIEWS: Useful aggregated data
