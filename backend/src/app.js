@@ -4,6 +4,7 @@ const cors = require("cors");
 const healthRoutes = require("./routes/health.routes");
 const authRoutes = require("./routes/auth.routes");
 const activitiesRoutes = require("./routes/activities");
+const sleepRoutes = require("./routes/sleep");
 const errorMiddleware = require("./middlewares/error.middleware");
 
 const app = express();
@@ -16,6 +17,7 @@ app.get("/health", (req, res) => res.json({ status: "ok" }));
 app.use("/api/health", healthRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/activities", activitiesRoutes);
+app.use("/api/sleep", sleepRoutes);
 
 // handler d'erreurs (toujours en dernier)
 app.use(errorMiddleware);
