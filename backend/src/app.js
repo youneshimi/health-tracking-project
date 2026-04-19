@@ -7,6 +7,7 @@ const activitiesRoutes = require("./routes/activities");
 const sleepRoutes = require("./routes/sleep");
 const heartRateRoutes = require("./routes/heartRate");
 const anomaliesRoutes = require("./routes/anomalies");
+const analyticsRoutes = require("./routes/analytics");
 const errorMiddleware = require("./middlewares/error.middleware");
 
 const app = express();
@@ -22,6 +23,7 @@ app.use("/api/activities", activitiesRoutes);
 app.use("/api/sleep", sleepRoutes);
 app.use("/api/heart-rate", heartRateRoutes);
 app.use("/api/anomalies", anomaliesRoutes);
+app.use("/api/analytics", analyticsRoutes);
 
 // handler d'erreurs (toujours en dernier)
 app.use(errorMiddleware);
