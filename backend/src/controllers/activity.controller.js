@@ -1,5 +1,6 @@
 const asyncHandler = require("../utils/asyncHandler");
 const activityService = require("../services/activity.service");
+const anomalyDetector = require("../services/anomalyDetector");
 const ApiError = require("../utils/ApiError");
 
 // Validation de l'activité
@@ -117,6 +118,11 @@ exports.create = asyncHandler(async (req, res) => {
     }
 
     const activity = await activityService.createActivity(req.user.userId, req.body);
+
+    // Lancer la détection d'anomalies en arrière-plan (non-bloquant)
+    anomalyDetector.runFullDetection(req.user.userId).catch(err => {
+        console.error("Error running anomaly detection:", err);
+    });
 
     res.status(201).json({
         success: true,

@@ -1,5 +1,6 @@
 const asyncHandler = require("../utils/asyncHandler");
 const heartRateService = require("../services/heart-rate.service");
+const anomalyDetector = require("../services/anomalyDetector");
 const ApiError = require("../utils/ApiError");
 
 // Validation d'une mesure de fréquence cardiaque
@@ -112,6 +113,11 @@ exports.create = asyncHandler(async (req, res) => {
 
     const record = await heartRateService.createHeartRateRecord(req.user.userId, req.body);
 
+    // Lancer la détection d'anomalies en arrière-plan (non-bloquant)
+    anomalyDetector.runFullDetection(req.user.userId).catch(err => {
+        console.error("Error running anomaly detection:", err);
+    });
+
     res.status(201).json({
         success: true,
         data: record,
@@ -130,6 +136,11 @@ exports.batchCreate = asyncHandler(async (req, res) => {
     }
 
     const result = await heartRateService.batchInsertHeartRateRecords(req.user.userId, records);
+
+    // Lancer la détection d'anomalies en arrière-plan (non-bloquant)
+    anomalyDetector.runFullDetection(req.user.userId).catch(err => {
+        console.error("Error running anomaly detection:", err);
+    });
 
     res.status(201).json({
         success: true,

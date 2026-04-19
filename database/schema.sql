@@ -119,33 +119,24 @@ COMMENT='Heart rate measurements in different contexts';
 CREATE TABLE anomalies (
     anomaly_id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
-    anomaly_type ENUM(
-        'high_resting_hr', 
-        'low_resting_hr', 
-        'insufficient_sleep', 
-        'excessive_sleep', 
-        'low_activity', 
-        'excessive_activity', 
-        'irregular_pattern', 
-        'other'
-    ) NOT NULL,
-    severity ENUM('low', 'medium', 'high', 'critical') DEFAULT 'low',
-    value FLOAT,
-    threshold FLOAT,
-    description TEXT NOT NULL,
+    type ENUM('heart_rate', 'sleep', 'activity') NOT NULL,
+    severity ENUM('low', 'medium', 'high') NOT NULL,
     detected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    resolved BOOLEAN DEFAULT FALSE,
-    resolved_at TIMESTAMP NULL,
+    description TEXT NOT NULL,
+    related_id INT,
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     -- Foreign key
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
     
     -- Indexes
     INDEX idx_user_id (user_id),
-    INDEX idx_detected_at (detected_at),
-    INDEX idx_anomaly_type (anomaly_type),
+    INDEX idx_type (type),
     INDEX idx_severity (severity),
-    INDEX idx_resolved (resolved)
+    INDEX idx_is_read (is_read),
+    INDEX idx_detected_at (detected_at),
+    UNIQUE KEY uk_anomaly_dedup (user_id, type, severity, description(100), DATE(detected_at))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Detected health anomalies and alerts';
 

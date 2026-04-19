@@ -6,6 +6,7 @@ const authRoutes = require("./routes/auth.routes");
 const activitiesRoutes = require("./routes/activities");
 const sleepRoutes = require("./routes/sleep");
 const heartRateRoutes = require("./routes/heartRate");
+const anomaliesRoutes = require("./routes/anomalies");
 const errorMiddleware = require("./middlewares/error.middleware");
 
 const app = express();
@@ -20,6 +21,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/activities", activitiesRoutes);
 app.use("/api/sleep", sleepRoutes);
 app.use("/api/heart-rate", heartRateRoutes);
+app.use("/api/anomalies", anomaliesRoutes);
 
 // handler d'erreurs (toujours en dernier)
 app.use(errorMiddleware);

@@ -1,5 +1,6 @@
 const asyncHandler = require("../utils/asyncHandler");
 const sleepService = require("../services/sleep.service");
+const anomalyDetector = require("../services/anomalyDetector");
 const ApiError = require("../utils/ApiError");
 
 // Validation de l'enregistrement de sommeil
@@ -116,6 +117,11 @@ exports.create = asyncHandler(async (req, res) => {
     }
 
     const record = await sleepService.createSleepRecord(req.user.userId, req.body);
+
+    // Lancer la détection d'anomalies en arrière-plan (non-bloquant)
+    anomalyDetector.runFullDetection(req.user.userId).catch(err => {
+        console.error("Error running anomaly detection:", err);
+    });
 
     res.status(201).json({
         success: true,
