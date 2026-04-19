@@ -1,140 +1,377 @@
-/* Welcome Section */
-.welcomeSection {
-  margin-bottom: 40px;
-}
-
-.sectionTitle {
-  font-size: 28px;
-  font-weight: 700;
-  color: #1e293b;
-  margin: 0 0 12px 0;
-  letter-spacing: -0.5px;
-}
-
-.sectionDescription {
-  font-size: 16px;
-  color: #64748b;
-  margin: 0 0 32px 0;
-  line-height: 1.5;
-}
-
-/* Features Grid */
-.featuresGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
+/* =============== KPI Cards Section =============== */
+.kpiSection {
   margin-bottom: 32px;
 }
 
-.featureCard {
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.kpiCard {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  transition: all 0.3s;
+}
+
+.kpiCard:hover {
+  border-color: #60a5fa;
+  box-shadow: 0 4px 12px rgba(96, 165, 250, 0.1);
+}
+
+.kpiIcon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f0f4ff 0%, #e9eef8 100%);
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.kpiContent {
+  flex: 1;
+}
+
+.kpiTitle {
+  font-size: 13px;
+  font-weight: 500;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 8px 0;
+}
+
+.kpiValue {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 4px 0;
+}
+
+.kpiSubtitle {
+  font-size: 12px;
+  color: #94a3b8;
+  margin: 0 0 8px 0;
+}
+
+.kpiVariation {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.kpiVariation.positive {
+  color: #16a34a;
+  background-color: #f0fdf4;
+}
+
+.kpiVariation.negative {
+  color: #dc2626;
+  background-color: #fef2f2;
+}
+
+.kpiVariationIcon {
+  font-size: 14px;
+}
+
+/* =============== Section Titles & Spacing =============== */
+.sectionTitle {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 20px 0;
+  letter-spacing: -0.5px;
+}
+
+.chartSection {
   background: white;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 24px;
-  transition: all 0.3s;
-  cursor: pointer;
+  margin-bottom: 24px;
+}
+
+.chartContainer {
+  margin-top: 16px;
+  min-height: 300px;
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
-.featureCard:hover {
-  border-color: #60a5fa;
-  box-shadow: 0 4px 15px rgba(96, 165, 250, 0.1);
-  transform: translateY(-2px);
+/* =============== Anomalies Section =============== */
+.anomaliesSection {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
 }
 
-.featureIcon {
-  font-size: 32px;
+.anomaliesList {
+  list-style: none;
+  margin: 16px 0 0 0;
+  padding: 0;
+}
+
+.anomalyItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
   margin-bottom: 12px;
-  display: inline-block;
+  transition: all 0.2s;
 }
 
-.featureCard h3 {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1e293b;
-  margin: 0 0 8px 0;
+.anomalyItem:hover {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
 }
 
-.featureCard p {
-  font-size: 14px;
-  color: #64748b;
-  margin: 0;
-  line-height: 1.5;
+.anomalyItem:last-child {
+  margin-bottom: 0;
+}
+
+.anomalyIcon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.anomalyContent {
   flex: 1;
 }
 
-/* Stats Section */
-.statsSection {
-  margin-bottom: 40px;
+.anomalyType {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 4px 0;
 }
 
-.statsGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+.anomalyDesc {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0 0 6px 0;
+}
+
+.anomalyMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.severityBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.severityBadge.high {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.severityBadge.medium {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.severityBadge.low {
+  background-color: #dbeafe;
+  color: #0c4a6e;
+}
+
+.viewAllLink {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 8px 16px;
+  color: #3b82f6;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.viewAllLink:hover {
+  color: #2563eb;
+  transform: translateX(4px);
+}
+
+/* =============== Skeleton Loading =============== */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.skeleton {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  background: linear-gradient(
+    90deg,
+    #f1f5f9 0%,
+    #e2e8f0 50%,
+    #f1f5f9 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeletonKPI {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
   gap: 16px;
 }
 
-.statCard {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+.skeletonIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.skeletonContent {
+  flex: 1;
+}
+
+.skeletonTitle {
+  height: 12px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  width: 60%;
+}
+
+.skeletonValue {
+  height: 28px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  width: 70%;
+}
+
+.skeletonBadge {
+  height: 16px;
+  border-radius: 4px;
+  width: 40%;
+}
+
+.skeletonChart {
+  background: white;
+  border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 24px;
-  color: white;
+  margin-bottom: 24px;
+  min-height: 350px;
+}
+
+.skeletonChartTitle {
+  height: 22px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  width: 30%;
+}
+
+.skeletonChartArea {
+  height: 250px;
+  border-radius: 8px;
+}
+
+.loadingText {
   text-align: center;
-  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.15);
+  color: #94a3b8;
+  font-size: 14px;
+  padding: 40px 20px;
 }
 
-.statValue {
-  font-size: 32px;
-  font-weight: 700;
-  margin-bottom: 8px;
-}
-
-.statLabel {
-  font-size: 13px;
-  opacity: 0.9;
-  font-weight: 500;
-}
-
-/* Mobile Responsive */
+/* =============== Mobile Responsive =============== */
 @media (max-width: 768px) {
-  .sectionTitle {
-    font-size: 24px;
-  }
-
-  .sectionDescription {
-    font-size: 14px;
-  }
-
-  .featuresGrid {
-    grid-template-columns: 1fr;
+  .kpiGrid {
+    grid-template-columns: repeat(2, 1fr);
     gap: 16px;
   }
 
-  .featureCard {
-    padding: 20px;
-  }
-
-  .statsGrid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-  }
-
-  .statCard {
+  .chartSection {
     padding: 16px;
   }
 
-  .statValue {
+  .chartContainer {
+    min-height: 250px;
+  }
+
+  .anomaliesSection {
+    padding: 16px;
+  }
+
+  .sectionTitle {
+    font-size: 18px;
+  }
+
+  .kpiValue {
     font-size: 24px;
   }
 }
 
 @media (max-width: 480px) {
-  .sectionTitle {
+  .kpiGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .kpiCard {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .kpiIcon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .kpiValue {
     font-size: 20px;
   }
 
-  .statsGrid {
-    grid-template-columns: 1fr;
+  .sectionTitle {
+    font-size: 16px;
+  }
+
+  .chartContainer {
+    min-height: 200px;
   }
 }
+

@@ -12,6 +12,7 @@
     "react-dom": "^19.2.4",
     "react-router-dom": "^7.14.1",
     "react-scripts": "5.0.1",
+    "recharts": "^3.8.1",
     "web-vitals": "^2.1.4",
     "yaml": "^2.8.2"
   },
