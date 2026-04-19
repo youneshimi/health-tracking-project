@@ -351,6 +351,229 @@
   color: #1e293b;
 }
 
+/* =============== Analytics Page =============== */
+.analyticsControls {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  gap: 30px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.controlLabel {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #64748b;
+  letter-spacing: 0.5px;
+  margin: 0 0 12px 0;
+}
+
+.tabsContainer,
+.periodContainer {
+  flex: 1;
+  min-width: 200px;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tab {
+  padding: 8px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: white;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tab:hover {
+  border-color: #3b82f6;
+  color: #3b82f6;
+}
+
+.tabActive {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: white;
+}
+
+.periodButtons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.periodButton {
+  padding: 8px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: white;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.periodButton:hover {
+  border-color: #3b82f6;
+  color: #3b82f6;
+}
+
+.periodActive {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: white;
+}
+
+.section {
+  margin-bottom: 12px;
+}
+
+.sectionTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 16px 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.chartHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.regressionInfo {
+  display: flex;
+  gap: 16px;
+  font-size: 13px;
+  flex-wrap: wrap;
+}
+
+.predictionsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.predictionCard {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+}
+
+.predictionTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 16px 0;
+}
+
+.predictionValue {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.value {
+  font-size: 36px;
+  font-weight: 700;
+  color: #3b82f6;
+}
+
+.confidenceInterval {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-bottom: 8px;
+  font-family: monospace;
+}
+
+.confidenceLabel {
+  font-size: 11px;
+  color: #cbd5e1;
+  font-weight: 600;
+}
+
+.correlationsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.correlationCard {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.correlationTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 12px 0;
+}
+
+.correlationBody {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.correlationBody p {
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.correlationCoeff {
+  font-size: 14px;
+  font-weight: 700;
+  color: #3b82f6;
+  text-align: right;
+  padding-top: 8px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.emptyChart {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  background: #f8fafc;
+  border-radius: 8px;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
 /* =============== Empty State =============== */
 .emptyState {
   text-align: center;
@@ -368,6 +591,98 @@
   font-weight: 600;
   color: #1e293b;
   margin-bottom: 8px;
+}
+
+/* =============== Anomalies Page =============== */
+.anomaliesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 16px;
+}
+
+.anomalyCard {
+  background: white;
+  border-left: 4px solid #dc2626;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+  transition: all 0.2s;
+}
+
+.anomalyCard:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.anomalyHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.anomalyTitleGroup {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  flex: 1;
+}
+
+.anomalyIcon {
+  font-size: 24px;
+  line-height: 1.2;
+}
+
+.anomalyTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 4px 0;
+}
+
+.anomalyType {
+  font-size: 11px;
+  color: #94a3b8;
+  margin: 0;
+  font-family: monospace;
+}
+
+.severityBadge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.anomalyMessage {
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.5;
+  margin: 0 0 12px 0;
+}
+
+.anomalyFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px solid #f1f5f9;
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.anomalyTime {
+  font-weight: 500;
+}
+
+.anomalyMetric {
+  font-family: monospace;
+  background: #f8fafc;
+  padding: 2px 6px;
+  border-radius: 3px;
 }
 
 /* =============== Mobile Responsive =============== */
@@ -404,6 +719,55 @@
   .statsGrid {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  .analyticsControls {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .tabsContainer,
+  .periodContainer {
+    width: 100%;
+  }
+
+  .tabs,
+  .periodButtons {
+    width: 100%;
+  }
+
+  .tab,
+  .periodButton {
+    flex: 1;
+  }
+
+  .predictionsGrid,
+  .correlationsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .chartHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .regressionInfo {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .anomaliesGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .anomalyHeader {
+    flex-direction: column;
+  }
+
+  .anomalyFooter {
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+  }
 }
 
 @media (max-width: 480px) {
@@ -430,5 +794,20 @@
 
   .statLabel {
     font-size: 11px;
+  }
+
+  .value {
+    font-size: 28px;
+  }
+
+  .predictionsGrid,
+  .correlationsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .tab,
+  .periodButton {
+    font-size: 12px;
+    padding: 6px 12px;
   }
 }
