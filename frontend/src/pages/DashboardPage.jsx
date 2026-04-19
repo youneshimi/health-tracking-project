@@ -1,57 +1,76 @@
 import React from "react";
-import { useAuth } from "../hooks/useAuth";
-import "./DashboardPage.css";
+import Layout from "../components/layout/Layout";
+import styles from "./DashboardPage.module.css";
 
 export default function DashboardPage() {
-    const { user, logout } = useAuth();
-
     return (
-        <div className="dashboard-container">
-            <header className="dashboard-header">
-                <h1>Health Tracker Dashboard</h1>
-                <div className="header-actions">
-                    <span className="user-info">Bienvenue, {user?.email}!</span>
-                    <button className="btn-logout" onClick={logout}>
-                        Déconnexion
-                    </button>
+        <Layout pageTitle="Dashboard">
+            <div className={styles.welcomeSection}>
+                <h2 className={styles.sectionTitle}>Bienvenue sur Health Tracker</h2>
+                <p className={styles.sectionDescription}>
+                    Suivi complète de votre santé en un seul endroit.
+                </p>
+
+                <div className={styles.featuresGrid}>
+                    <div className={styles.featureCard}>
+                        <div className={styles.featureIcon}>⚡</div>
+                        <h3>Activités</h3>
+                        <p>Suivi de vos exercices, calories et durée d'activité</p>
+                    </div>
+
+                    <div className={styles.featureCard}>
+                        <div className={styles.featureIcon}>😴</div>
+                        <h3>Sommeil</h3>
+                        <p>Enregistrement et analyse de la qualité de votre sommeil</p>
+                    </div>
+
+                    <div className={styles.featureCard}>
+                        <div className={styles.featureIcon}>❤️</div>
+                        <h3>Fréquence Cardiaque</h3>
+                        <p>Monitoring continu de votre santé cardiaque</p>
+                    </div>
+
+                    <div className={styles.featureCard}>
+                        <div className={styles.featureIcon}>📈</div>
+                        <h3>Analyses & Tendances</h3>
+                        <p>Graphiques, prédictions et corrélations avancées</p>
+                    </div>
+
+                    <div className={styles.featureCard}>
+                        <div className={styles.featureIcon}>⚠️</div>
+                        <h3>Détection d'Anomalies</h3>
+                        <p>Alertes intelligentes sur vos données anormales</p>
+                    </div>
+
+                    <div className={styles.featureCard}>
+                        <div className={styles.featureIcon}>🔒</div>
+                        <h3>Sécurité</h3>
+                        <p>Vos données sont protégées par authentification JWT</p>
+                    </div>
                 </div>
-            </header>
+            </div>
 
-            <main className="dashboard-main">
-                <section className="welcome-section">
-                    <h2>Bienvenue sur Health Tracker</h2>
-                    <p>Cette section est en cours de construction...</p>
-                    <p>
-                        Vous pouvez maintenant :
-                    </p>
-                    <ul>
-                        <li>📊 Suivre vos activités</li>
-                        <li>😴 Enregistrer votre sommeil</li>
-                        <li>❤️ Monitorer votre fréquence cardiaque</li>
-                        <li>📈 Consulter vos analytics avancés</li>
-                        <li>🔍 Analyser les corrélations entre vos données</li>
-                    </ul>
-                </section>
-
-                <section className="features-grid">
-                    <div className="feature-card">
-                        <h3>📊 Activités</h3>
-                        <p>Suivi de vos exercices et calories brûlées</p>
+            <div className={styles.statsSection}>
+                <h2 className={styles.sectionTitle}>Résumé Rapide</h2>
+                <div className={styles.statsGrid}>
+                    <div className={styles.statCard}>
+                        <div className={styles.statValue}>--</div>
+                        <div className={styles.statLabel}>Activités cette semaine</div>
                     </div>
-                    <div className="feature-card">
-                        <h3>😴 Sommeil</h3>
-                        <p>Enregistrement et analyse de vos nuits</p>
+                    <div className={styles.statCard}>
+                        <div className={styles.statValue}>--</div>
+                        <div className={styles.statLabel}>Sommeil moyen</div>
                     </div>
-                    <div className="feature-card">
-                        <h3>❤️ Fréquence Cardiaque</h3>
-                        <p>Monitoring de votre santé cardiaque</p>
+                    <div className={styles.statCard}>
+                        <div className={styles.statValue}>--</div>
+                        <div className={styles.statLabel}>FC repos</div>
                     </div>
-                    <div className="feature-card">
-                        <h3>📈 Analytics</h3>
-                        <p>Tendances et prédictions de vos données</p>
+                    <div className={styles.statCard}>
+                        <div className={styles.statValue}>--</div>
+                        <div className={styles.statLabel}>Anomalies détectées</div>
                     </div>
-                </section>
-            </main>
-        </div>
+                </div>
+            </div>
+        </Layout>
     );
 }
