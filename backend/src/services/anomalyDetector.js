@@ -43,7 +43,7 @@ async function detectHeartRateAnomalies(userId) {
         // 1. BPM au repos > 100 → tachycardie (high)
         const [tachycardia] = await pool.query(
             `SELECT hr_id, bpm FROM heart_rate 
-             WHERE user_id = ? AND context IN ('rest', 'sleep') AND bpm > 100
+             WHERE user_id = ? AND context IN ('resting', 'sleeping') AND bpm > 100
              ORDER BY timestamp DESC
              LIMIT 1`,
             [userId]
@@ -63,7 +63,7 @@ async function detectHeartRateAnomalies(userId) {
         // 2. BPM au repos < 50 → bradycardie (medium)
         const [bradycardia] = await pool.query(
             `SELECT hr_id, bpm FROM heart_rate 
-             WHERE user_id = ? AND context IN ('rest', 'sleep') AND bpm < 50
+             WHERE user_id = ? AND context IN ('resting', 'sleeping') AND bpm < 50
              ORDER BY timestamp DESC
              LIMIT 1`,
             [userId]
@@ -83,7 +83,7 @@ async function detectHeartRateAnomalies(userId) {
         // 3. Variation > 30 bpm entre deux mesures consécutives au repos (medium)
         const [restMeasurements] = await pool.query(
             `SELECT hr_id, bpm, timestamp FROM heart_rate 
-             WHERE user_id = ? AND context IN ('rest', 'sleep')
+             WHERE user_id = ? AND context IN ('resting', 'sleeping')
              ORDER BY timestamp DESC
              LIMIT 100`,
             [userId]

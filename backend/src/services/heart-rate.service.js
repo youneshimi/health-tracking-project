@@ -4,15 +4,15 @@ const ApiError = require("../utils/ApiError");
 /**
  * Crée une mesure de fréquence cardiaque
  */
-async function createHeartRateRecord(userId, { timestamp, bpm, context, activityId, notes }) {
+async function createHeartRateRecord(userId, { timestamp, bpm, context }) {
     if (!timestamp || !bpm) {
         throw new ApiError(400, "Missing required fields: timestamp, bpm");
     }
 
     const [result] = await pool.query(
-        `INSERT INTO heart_rate (user_id, timestamp, bpm, context, activity_id, notes)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-        [userId, timestamp, bpm, context || null, activityId || null, notes || null]
+        `INSERT INTO heart_rate (user_id, timestamp, bpm, context)
+         VALUES (?, ?, ?, ?)`,
+        [userId, timestamp, bpm, context || null]
     );
 
     return {
@@ -21,8 +21,6 @@ async function createHeartRateRecord(userId, { timestamp, bpm, context, activity
         timestamp,
         bpm,
         context: context || null,
-        activityId: activityId || null,
-        notes: notes || null,
     };
 }
 
@@ -31,7 +29,7 @@ async function createHeartRateRecord(userId, { timestamp, bpm, context, activity
  */
 async function getHeartRateRecordById(hrId, userId) {
     const [rows] = await pool.query(
-        `SELECT hr_id, user_id, timestamp, bpm, context, activity_id, notes
+        `SELECT hr_id, user_id, timestamp, bpm, context
          FROM heart_rate
          WHERE hr_id = ? AND user_id = ?
          LIMIT 1`,
@@ -72,7 +70,7 @@ async function getHeartRateRecords(userId, { page = 1, limit = 50, context, date
 
     // Requête pour les données
     const [records] = await pool.query(
-        `SELECT hr_id, user_id, timestamp, bpm, context, activity_id, notes
+        `SELECT hr_id, user_id, timestamp, bpm, context
          FROM heart_rate
          ${whereClause}
          ORDER BY timestamp DESC
@@ -165,15 +163,13 @@ async function batchInsertHeartRateRecords(userId, records) {
         const insertedRecords = [];
         for (const record of records) {
             const [result] = await connection.query(
-                `INSERT INTO heart_rate (user_id, timestamp, bpm, context, activity_id, notes)
-                 VALUES (?, ?, ?, ?, ?, ?)`,
+                `INSERT INTO heart_rate (user_id, timestamp, bpm, context)
+                 VALUES (?, ?, ?, ?)`,
                 [
                     userId,
                     record.timestamp,
                     record.bpm,
                     record.context || null,
-                    record.activityId || null,
-                    record.notes || null,
                 ]
             );
 
@@ -183,8 +179,6 @@ async function batchInsertHeartRateRecords(userId, records) {
                 timestamp: record.timestamp,
                 bpm: record.bpm,
                 context: record.context || null,
-                activityId: record.activityId || null,
-                notes: record.notes || null,
             });
         }
 

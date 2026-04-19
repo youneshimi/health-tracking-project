@@ -25,7 +25,7 @@ const validateHeartRateInput = (record) => {
     }
 
     if (record.context) {
-        const validContexts = ["rest", "exercise", "recovery", "sleep"];
+        const validContexts = ["resting", "exercising", "sleeping", "stressed", "other"];
         if (!validContexts.includes(record.context)) {
             errors.push({ field: "context", msg: `context must be one of: ${validContexts.join(", ")}` });
         }
@@ -52,7 +52,7 @@ const validateListParams = (req) => {
     }
 
     if (context) {
-        const validContexts = ["rest", "exercise", "recovery", "sleep"];
+        const validContexts = ["resting", "exercising", "sleeping", "stressed", "other"];
         if (!validContexts.includes(context)) {
             errors.push({ field: "context", msg: `context must be one of: ${validContexts.join(", ")}` });
         }

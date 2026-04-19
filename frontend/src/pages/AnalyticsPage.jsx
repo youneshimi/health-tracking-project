@@ -15,9 +15,9 @@ import { useAnalytics } from "../hooks/useAnalytics";
 import styles from "./DataPages.module.css";
 
 const METRICS = [
-    { value: "sleep", label: "Sommeil", icon: "😴" },
-    { value: "activity", label: "Activité", icon: "🏃" },
-    { value: "heart_rate", label: "Fréquence Cardiaque", icon: "❤️" },
+    { value: "sleep_quality", label: "Sommeil", icon: "😴" },
+    { value: "weekly_activity_minutes", label: "Activité", icon: "🏃" },
+    { value: "resting_hr", label: "Fréquence Cardiaque", icon: "❤️" },
 ];
 
 const PERIODS = [
@@ -245,7 +245,7 @@ function CorrelationsSection({ data, isLoading }) {
  */
 function WeeklySummarySection({ data, isLoading }) {
     if (isLoading) return <SkeletonLoader />;
-    if (!data) {
+    if (!data || !data.sleep || !data.activity || !data.resting_heart_rate) {
         return (
             <div className={styles.emptyState}>
                 <p>Pas assez de données pour le résumé hebdomadaire</p>
@@ -253,14 +253,16 @@ function WeeklySummarySection({ data, isLoading }) {
         );
     }
 
-    const formatVariation = (value) => {
-        if (value > 0) return `+${value.toFixed(1)}%`;
-        return `${value.toFixed(1)}%`;
-    };
+    const getVariationColor = (value) => value > 0 ? "#10b981" : "#ef4444";
+    const fmt = (v, unit) => v ? `${v.toFixed(1)} ${unit}` : "—";
+    const fmtPct = (v) => v > 0 ? `+${v.toFixed(1)}%` : `${v.toFixed(1)}%`;
 
-    const getVariationColor = (value) => {
-        return value > 0 ? "#10b981" : "#ef4444";
-    };
+    const sleepCur = data.sleep.current.avg_hours;
+    const sleepPrev = data.sleep.previous.avg_hours;
+    const actCur = data.activity.current.session_count;
+    const actPrev = data.activity.previous.session_count;
+    const hrCur = data.resting_heart_rate.current.avg_bpm;
+    const hrPrev = data.resting_heart_rate.previous.avg_bpm;
 
     return (
         <div className={styles.tableSection}>
@@ -276,39 +278,34 @@ function WeeklySummarySection({ data, isLoading }) {
                 <tbody>
                     <tr>
                         <td className={styles.td}>Sommeil moyen</td>
-                        <td className={styles.td}>{data.current_week.sleep_avg?.toFixed(1) || "—"} h</td>
-                        <td className={styles.td}>{data.previous_week.sleep_avg?.toFixed(1) || "—"} h</td>
+                        <td className={styles.td}>{fmt(sleepCur, "h")}</td>
+                        <td className={styles.td}>{fmt(sleepPrev, "h")}</td>
                         <td className={styles.td}>
-                            <span style={{ color: getVariationColor(data.current_week.sleep_avg - data.previous_week.sleep_avg) }}>
-                                {data.current_week.sleep_avg && data.previous_week.sleep_avg
-                                    ? `${((data.current_week.sleep_avg - data.previous_week.sleep_avg) / data.previous_week.sleep_avg * 100).toFixed(1)}%`
-                                    : "—"}
-                                {data.current_week.sleep_avg > data.previous_week.sleep_avg ? " ↑" : data.current_week.sleep_avg < data.previous_week.sleep_avg ? " ↓" : ""}
+                            <span style={{ color: getVariationColor(data.sleep.hours_variation_percent) }}>
+                                {sleepCur || sleepPrev ? fmtPct(data.sleep.hours_variation_percent) : "—"}
+                                {" "}{sleepCur > sleepPrev ? "↑" : sleepCur < sleepPrev ? "↓" : ""}
                             </span>
                         </td>
                     </tr>
                     <tr>
                         <td className={styles.td}>Activités</td>
-                        <td className={styles.td}>{data.current_week.activities_count || 0}</td>
-                        <td className={styles.td}>{data.previous_week.activities_count || 0}</td>
+                        <td className={styles.td}>{actCur || 0} séances</td>
+                        <td className={styles.td}>{actPrev || 0} séances</td>
                         <td className={styles.td}>
-                            <span style={{ color: getVariationColor(data.current_week.activities_count - data.previous_week.activities_count) }}>
-                                {data.current_week.activities_count - data.previous_week.activities_count > 0 ? "+" : ""}
-                                {data.current_week.activities_count - data.previous_week.activities_count}
-                                {data.current_week.activities_count > data.previous_week.activities_count ? " ↑" : data.current_week.activities_count < data.previous_week.activities_count ? " ↓" : ""}
+                            <span style={{ color: getVariationColor(actCur - actPrev) }}>
+                                {actCur - actPrev > 0 ? "+" : ""}{actCur - actPrev}
+                                {" "}{actCur > actPrev ? "↑" : actCur < actPrev ? "↓" : ""}
                             </span>
                         </td>
                     </tr>
                     <tr>
-                        <td className={styles.td}>FC moyenne</td>
-                        <td className={styles.td}>{data.current_week.heart_rate_avg?.toFixed(0) || "—"} bpm</td>
-                        <td className={styles.td}>{data.previous_week.heart_rate_avg?.toFixed(0) || "—"} bpm</td>
+                        <td className={styles.td}>FC au repos</td>
+                        <td className={styles.td}>{hrCur ? `${hrCur} bpm` : "—"}</td>
+                        <td className={styles.td}>{hrPrev ? `${hrPrev} bpm` : "—"}</td>
                         <td className={styles.td}>
-                            <span style={{ color: getVariationColor(data.previous_week.heart_rate_avg - data.current_week.heart_rate_avg) }}>
-                                {data.current_week.heart_rate_avg && data.previous_week.heart_rate_avg
-                                    ? `${((data.previous_week.heart_rate_avg - data.current_week.heart_rate_avg) / data.previous_week.heart_rate_avg * 100).toFixed(1)}%`
-                                    : "—"}
-                                {data.current_week.heart_rate_avg < data.previous_week.heart_rate_avg ? " ↓" : data.current_week.heart_rate_avg > data.previous_week.heart_rate_avg ? " ↑" : ""}
+                            <span style={{ color: getVariationColor(hrPrev - hrCur) }}>
+                                {hrCur && hrPrev ? fmtPct(data.resting_heart_rate.variation_percent) : "—"}
+                                {" "}{hrCur < hrPrev ? "↓" : hrCur > hrPrev ? "↑" : ""}
                             </span>
                         </td>
                     </tr>
@@ -323,7 +320,7 @@ function WeeklySummarySection({ data, isLoading }) {
  */
 export default function AnalyticsPage() {
     const { getTrends, getPredictions, getCorrelations, getWeeklySummary } = useAnalytics();
-    const [selectedMetric, setSelectedMetric] = useState("sleep");
+    const [selectedMetric, setSelectedMetric] = useState("sleep_quality");
     const [selectedPeriod, setSelectedPeriod] = useState("30");
     const [trendData, setTrendData] = useState(null);
     const [predictionData, setPredictionData] = useState(null);

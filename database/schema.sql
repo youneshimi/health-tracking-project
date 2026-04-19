@@ -136,7 +136,7 @@ CREATE TABLE anomalies (
     INDEX idx_severity (severity),
     INDEX idx_is_read (is_read),
     INDEX idx_detected_at (detected_at),
-    UNIQUE KEY uk_anomaly_dedup (user_id, type, severity, description(100), DATE(detected_at))
+    UNIQUE KEY uk_anomaly_dedup (user_id, type, severity, description(100), (DATE(detected_at)))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Detected health anomalies and alerts';
 
@@ -159,7 +159,7 @@ SELECT
 FROM users u
 LEFT JOIN activities a ON u.user_id = a.user_id
 LEFT JOIN sleep_records s ON u.user_id = s.user_id
-LEFT JOIN anomalies an ON u.user_id = an.user_id AND an.resolved = FALSE
+LEFT JOIN anomalies an ON u.user_id = an.user_id AND an.is_read = FALSE
 GROUP BY u.user_id, u.username, u.email;
 
 -- View: Daily activity summary

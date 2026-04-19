@@ -232,12 +232,20 @@ export default function SleepPage() {
     const handleAddSleep = async (data) => {
         setIsSubmitting(true);
         try {
-            await client.post("/api/sleep", data);
+            const payload = {
+                date: data.sleep_date,
+                totalHours: Number(data.total_hours),
+                deepSleepHours: data.deep_sleep_hours ? Number(data.deep_sleep_hours) : undefined,
+                lightSleepHours: data.light_sleep_hours ? Number(data.light_sleep_hours) : undefined,
+                remSleepHours: data.rem_sleep_hours ? Number(data.rem_sleep_hours) : undefined,
+                qualityScore: data.quality_score ? Number(data.quality_score) : undefined,
+            };
+            await client.post("/api/sleep", payload);
             addToast("Enregistrement de sommeil ajouté!", "success");
             setShowModal(false);
             await getSleepRecords();
         } catch (error) {
-            addToast(error.response?.data?.message || "Erreur", "error");
+            addToast(error.response?.data?.error?.message || error.response?.data?.message || "Erreur", "error");
         } finally {
             setIsSubmitting(false);
         }

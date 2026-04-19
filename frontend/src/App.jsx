@@ -1,6 +1,7 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
+import { ToastProvider } from "./components/Toast";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import DashboardPage from "./pages/DashboardPage";
@@ -16,6 +17,7 @@ function App() {
     return (
         <Router>
             <AuthProvider>
+            <ToastProvider>
                 <Routes>
                     {/* Routes publiques */}
                     <Route path="/login" element={<LoginPage />} />
@@ -74,6 +76,7 @@ function App() {
                     {/* Redirection par défaut */}
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
+            </ToastProvider>
             </AuthProvider>
         </Router>
     );

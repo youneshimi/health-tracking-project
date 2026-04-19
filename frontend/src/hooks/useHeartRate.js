@@ -18,7 +18,7 @@ export function useHeartRate() {
                 const response = await client.get("/api/heart-rate", {
                     params: { page, limit },
                 });
-                setHeartRateRecords(response.data.data.heartRateRecords || []);
+                setHeartRateRecords(Array.isArray(response.data.data) ? response.data.data : []);
                 return response.data.data;
             } catch (err) {
                 const message =

@@ -3,10 +3,10 @@ const ApiError = require("../utils/ApiError");
 const { findUserByEmail, findUserById, createUser } = require("./user.service");
 const { signAccessToken } = require("./token.service");
 
-async function signup({ username, email, password, firstName, lastName }) {
-    // validations minimales (en plus de validate.middleware si vous l’avez)
-    if (!username || !email || !password) {
-        throw new ApiError(400, "Missing required fields: username, email, password");
+async function signup({ username, name, email, password, firstName, lastName }) {
+    const resolvedUsername = username || name;
+    if (!resolvedUsername || !email || !password) {
+        throw new ApiError(400, "Missing required fields: name, email, password");
     }
 
     const exists = await findUserByEmail(email);
@@ -15,7 +15,7 @@ async function signup({ username, email, password, firstName, lastName }) {
     const passwordHash = await bcrypt.hash(password, 10);
 
     const user = await createUser({
-        username,
+        username: resolvedUsername,
         email,
         passwordHash,
         firstName,

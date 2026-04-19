@@ -120,7 +120,7 @@ async function getTrendData(userId, metric, period) {
                 DATE(timestamp) as date,
                 AVG(bpm) as value
             FROM heart_rate
-            WHERE user_id = ? AND context IN ('rest', 'sleep') AND timestamp >= ?
+            WHERE user_id = ? AND context IN ('resting', 'sleeping') AND timestamp >= ?
             GROUP BY DATE(timestamp)
             ORDER BY date ASC
         `;
@@ -289,7 +289,7 @@ async function getSleepHeartRateCorrelation(userId) {
         const [hrData] = await pool.query(
             `SELECT AVG(bpm) as avg_bpm
              FROM heart_rate
-             WHERE user_id = ? AND DATE(timestamp) = ? AND context IN ('rest', 'sleep')`,
+             WHERE user_id = ? AND DATE(timestamp) = ? AND context IN ('resting', 'sleeping')`,
             [userId, nextDate.toISOString().split("T")[0]]
         );
 
@@ -441,7 +441,7 @@ async function getWeeklySummary(userId) {
     const [currentWeekHR] = await pool.query(
         `SELECT AVG(bpm) as avg_bpm
          FROM heart_rate
-         WHERE user_id = ? AND context IN ('rest', 'sleep') AND timestamp >= ?`,
+         WHERE user_id = ? AND context IN ('resting', 'sleeping') AND timestamp >= ?`,
         [userId, currentWeekStart.toISOString()]
     );
 
@@ -449,7 +449,7 @@ async function getWeeklySummary(userId) {
     const [previousWeekHR] = await pool.query(
         `SELECT AVG(bpm) as avg_bpm
          FROM heart_rate
-         WHERE user_id = ? AND context IN ('rest', 'sleep') AND timestamp >= ? AND timestamp <= ?`,
+         WHERE user_id = ? AND context IN ('resting', 'sleeping') AND timestamp >= ? AND timestamp <= ?`,
         [userId, previousWeekStart.toISOString(), previousWeekEnd.toISOString()]
     );
 

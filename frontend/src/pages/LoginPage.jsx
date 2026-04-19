@@ -175,10 +175,3 @@ export default function LoginPage() {
         </div>
     );
 }
-                    Pas encore de compte ? { " "}
-    < Link to = "/register" > S'inscrire</Link>
-                </p >
-            </div >
-        </div >
-    );
-}

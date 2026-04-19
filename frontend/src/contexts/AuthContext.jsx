@@ -47,7 +47,7 @@ export function AuthProvider({ children }) {
             return { success: true };
         } catch (err) {
             const message =
-                err.response?.data?.message || "Erreur de connexion";
+                err.response?.data?.error?.message || err.response?.data?.message || "Erreur de connexion";
             setError(message);
             return { success: false, error: message };
         } finally {
@@ -63,7 +63,7 @@ export function AuthProvider({ children }) {
         setError(null);
 
         try {
-            const response = await client.post("/api/auth/register", {
+            const response = await client.post("/api/auth/signup", {
                 email,
                 password,
                 name,
@@ -81,7 +81,7 @@ export function AuthProvider({ children }) {
             return { success: true };
         } catch (err) {
             const message =
-                err.response?.data?.message || "Erreur d'inscription";
+                err.response?.data?.error?.message || err.response?.data?.message || "Erreur d'inscription";
             setError(message);
             return { success: false, error: message };
         } finally {

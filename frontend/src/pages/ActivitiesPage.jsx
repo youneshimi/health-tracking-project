@@ -296,12 +296,18 @@ export default function ActivitiesPage() {
     const handleAddActivity = async (data) => {
         setIsSubmitting(true);
         try {
-            await client.post("/api/activities", data);
+            const payload = {
+                activityType: data.type,
+                durationMinutes: Number(data.duration_minutes),
+                distanceKm: data.distance_km ? Number(data.distance_km) : undefined,
+                caloriesBurned: data.calories_burned ? Number(data.calories_burned) : undefined,
+            };
+            await client.post("/api/activities", payload);
             addToast("Activité ajoutée avec succès!", "success");
             setShowModal(false);
             await getActivities();
         } catch (error) {
-            addToast(error.response?.data?.message || "Erreur", "error");
+            addToast(error.response?.data?.error?.message || error.response?.data?.message || "Erreur", "error");
         } finally {
             setIsSubmitting(false);
         }

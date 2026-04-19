@@ -19,10 +19,11 @@ import styles from "./DataPages.module.css";
 
 const CONTEXTS = [
     { value: "", label: "Tous les contextes" },
-    { value: "rest", label: "Repos" },
-    { value: "exercise", label: "Exercice" },
-    { value: "recovery", label: "Récupération" },
-    { value: "sleep", label: "Sommeil" },
+    { value: "resting", label: "Repos" },
+    { value: "exercising", label: "Exercice" },
+    { value: "stressed", label: "Stress" },
+    { value: "sleeping", label: "Sommeil" },
+    { value: "other", label: "Autre" },
 ];
 
 /**
@@ -31,8 +32,8 @@ const CONTEXTS = [
 function HeartRateForm({ onSubmit, isLoading }) {
     const [formData, setFormData] = useState({
         bpm: 70,
-        context: "rest",
-        recorded_at: new Date().toISOString().slice(0, 16),
+        context: "resting",
+        timestamp: new Date().toISOString().slice(0, 16),
     });
     const [errors, setErrors] = useState({});
 
@@ -52,7 +53,7 @@ function HeartRateForm({ onSubmit, isLoading }) {
         if (!formData.bpm || formData.bpm < 30 || formData.bpm > 250)
             newErrors.bpm = "BPM: 30-250";
         if (!formData.context) newErrors.context = "Contexte requis";
-        if (!formData.recorded_at) newErrors.recorded_at = "Date/heure requise";
+        if (!formData.timestamp) newErrors.timestamp = "Date/heure requise";
         return newErrors;
     };
 
@@ -110,12 +111,12 @@ function HeartRateForm({ onSubmit, isLoading }) {
                 </label>
                 <input
                     type="datetime-local"
-                    name="recorded_at"
-                    value={formData.recorded_at}
+                    name="timestamp"
+                    value={formData.timestamp}
                     onChange={handleChange}
                     className={styles.input}
                 />
-                {errors.recorded_at && <div className={styles.error}>{errors.recorded_at}</div>}
+                {errors.timestamp && <div className={styles.error}>{errors.timestamp}</div>}
             </div>
 
             <div className={styles.formActions}>
@@ -189,10 +190,11 @@ export default function HeartRatePage() {
                 avg,
                 count: values.length,
                 color: {
-                    rest: "#10b981",
-                    exercise: "#ef4444",
-                    recovery: "#f59e0b",
-                    sleep: "#3b82f6",
+                    resting: "#10b981",
+                    exercising: "#ef4444",
+                    stressed: "#f59e0b",
+                    sleeping: "#3b82f6",
+                    other: "#999",
                 }[c.value],
             };
         });
@@ -201,12 +203,17 @@ export default function HeartRatePage() {
     const handleAddHeartRate = async (data) => {
         setIsSubmitting(true);
         try {
-            await client.post("/api/heart-rate", data);
+            const payload = {
+                bpm: Number(data.bpm),
+                context: data.context || null,
+                timestamp: new Date(data.timestamp).toISOString(),
+            };
+            await client.post("/api/heart-rate", payload);
             addToast("Mesure de FC ajoutée!", "success");
             setShowModal(false);
             await getHeartRateRecords();
         } catch (error) {
-            addToast(error.response?.data?.message || "Erreur", "error");
+            addToast(error.response?.data?.error?.message || error.response?.data?.message || "Erreur", "error");
         } finally {
             setIsSubmitting(false);
         }
@@ -335,10 +342,11 @@ export default function HeartRatePage() {
                                         <td className={styles.td}>
                                             <span className={styles.badge} style={{
                                                 backgroundColor: {
-                                                    rest: '#10b981',
-                                                    exercise: '#ef4444',
-                                                    recovery: '#f59e0b',
-                                                    sleep: '#3b82f6',
+                                                    resting: '#10b981',
+                                                    exercising: '#ef4444',
+                                                    stressed: '#f59e0b',
+                                                    sleeping: '#3b82f6',
+                                                    other: '#999',
                                                 }[hr.context] || '#999',
                                                 color: 'white'
                                             }}>
