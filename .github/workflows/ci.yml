@@ -1,0 +1,89 @@
+name: CI
+
+# Pipeline d'intégration continue déclenchée sur push et pull_request vers la branche main
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  backend-ci:
+    name: Backend CI
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Restaurer le cache npm du backend
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-backend-npm-${{ hashFiles('backend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-backend-npm-
+
+      - name: Installer les dépendances backend
+        run: npm ci
+
+      - name: Lancer les tests backend
+        run: npm test
+
+  frontend-ci:
+    name: Frontend CI
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Restaurer le cache npm du frontend
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-frontend-npm-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-frontend-npm-
+
+      - name: Installer les dépendances frontend
+        run: npm ci
+
+      - name: Construire le frontend
+        run: npm run build
+
+  docker-check:
+    name: Validation des Dockerfiles
+    needs:
+      - backend-ci
+      - frontend-ci
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Valider le Dockerfile du backend
+        run: |
+          docker build --no-cache --pull -f backend/Dockerfile backend
+
+      - name: Valider le Dockerfile du frontend
+        run: |
+          docker build --no-cache --pull -f frontend/Dockerfile frontend
