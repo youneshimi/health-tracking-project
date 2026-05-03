@@ -1,13 +1,15 @@
 import { describe, it, expect, beforeAll, afterAll } from "@jest/globals";
 import request from "supertest";
 import app from "../src/app.js";
-import mysql from "mysql2/promise";
 
 let userToken = null;
 let userId = null;
 let activityId = null;
 let otherUserToken = null;
 let otherUserId = null;
+const runId = `${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+const emailFor = (label) => `test.${label}.${runId}@example.com`;
+const nameFor = (label) => `${label} ${runId}`;
 
 /**
  * Tests pour les endpoints d'activités
@@ -16,34 +18,27 @@ describe("Activities Routes", () => {
     beforeAll(async () => {
         // Créer deux utilisateurs de test
         const res1 = await request(app).post("/api/auth/signup").send({
-            name: "Activities User 1",
-            email: "test.activities1@example.com",
+            name: nameFor("Activities User 1"),
+            email: emailFor("activities1"),
             password: "SecurePassword123!",
         });
         userToken = res1.body.data.token;
-        userId = res1.body.data.user.id;
+        userId = res1.body.data.user.userId;
 
         const res2 = await request(app).post("/api/auth/signup").send({
-            name: "Activities User 2",
-            email: "test.activities2@example.com",
+            name: nameFor("Activities User 2"),
+            email: emailFor("activities2"),
             password: "SecurePassword123!",
         });
         otherUserToken = res2.body.data.token;
-        otherUserId = res2.body.data.user.id;
+        otherUserId = res2.body.data.user.userId;
     });
 
     afterAll(async () => {
         try {
-            const pool = mysql.createPool({
-                host: process.env.DB_HOST || "localhost",
-                user: process.env.DB_USER || "root",
-                password: process.env.DB_PASSWORD || "root",
-                database: process.env.TEST_DB_NAME || "test_health_db",
-            });
-            const connection = await pool.getConnection();
-            await connection.query("DELETE FROM activities WHERE user_id IN (?, ?)", [userId, otherUserId]);
-            connection.release();
-            await pool.end();
+            const pool = global.testPool;
+            if (!pool) return;
+            await pool.query("DELETE FROM activities WHERE user_id IN (?, ?)", [userId, otherUserId]);
         } catch (err) {
             console.error("Erreur lors du nettoyage", err);
         }
@@ -57,19 +52,18 @@ describe("Activities Routes", () => {
                 .post("/api/activities")
                 .set("Authorization", `Bearer ${userToken}`)
                 .send({
-                    type: "running",
-                    date: new Date().toISOString().split("T")[0],
-                    duration_minutes: 30,
-                    distance_km: 5,
-                    calories_burned: 250,
+                    activityType: "running",
+                    durationMinutes: 30,
+                    distanceKm: 5,
+                    caloriesBurned: 250,
                 });
 
             expect(res.status).toBe(201);
-            expect(res.body).toHaveProperty("data.id");
-            expect(res.body.data.type).toBe("running");
-            expect(res.body.data.user_id).toBe(userId);
+            expect(res.body).toHaveProperty("data.activityId");
+            expect(res.body.data.activityType).toBe("running");
+            expect(res.body.data.userId).toBe(userId);
 
-            activityId = res.body.data.id;
+            activityId = res.body.data.activityId;
         });
 
         it("devrait rejeter un type d'activité invalide", async () => {
@@ -77,15 +71,14 @@ describe("Activities Routes", () => {
                 .post("/api/activities")
                 .set("Authorization", `Bearer ${userToken}`)
                 .send({
-                    type: "invalid_type",
-                    date: new Date().toISOString().split("T")[0],
-                    duration_minutes: 30,
-                    distance_km: 5,
-                    calories_burned: 250,
+                    activityType: "invalid_type",
+                    durationMinutes: 30,
+                    distanceKm: 5,
+                    caloriesBurned: 250,
                 });
 
             expect(res.status).toBe(400);
-            expect(res.body.message).toBeDefined();
+            expect(res.body.error.message).toBeDefined();
         });
 
         it("devrait rejeter une durée négative", async () => {
@@ -93,24 +86,22 @@ describe("Activities Routes", () => {
                 .post("/api/activities")
                 .set("Authorization", `Bearer ${userToken}`)
                 .send({
-                    type: "running",
-                    date: new Date().toISOString().split("T")[0],
-                    duration_minutes: -30,
-                    distance_km: 5,
-                    calories_burned: 250,
+                    activityType: "running",
+                    durationMinutes: -30,
+                    distanceKm: 5,
+                    caloriesBurned: 250,
                 });
 
             expect(res.status).toBe(400);
-            expect(res.body.message).toBeDefined();
+            expect(res.body.error.message).toBeDefined();
         });
 
         it("devrait rejeter sans token d'authentification", async () => {
             const res = await request(app).post("/api/activities").send({
-                type: "running",
-                date: new Date().toISOString().split("T")[0],
-                duration_minutes: 30,
-                distance_km: 5,
-                calories_burned: 250,
+                activityType: "running",
+                durationMinutes: 30,
+                distanceKm: 5,
+                caloriesBurned: 250,
             });
 
             expect(res.status).toBe(401);
@@ -127,13 +118,10 @@ describe("Activities Routes", () => {
                     .post("/api/activities")
                     .set("Authorization", `Bearer ${userToken}`)
                     .send({
-                        type: ["running", "cycling", "swimming", "walking"][i % 4],
-                        date: new Date(Date.now() - i * 24 * 60 * 60 * 1000)
-                            .toISOString()
-                            .split("T")[0],
-                        duration_minutes: 30 + i * 5,
-                        distance_km: 5,
-                        calories_burned: 250 + i * 10,
+                        activityType: ["running", "cycling", "swimming", "walking"][i % 4],
+                        durationMinutes: 30 + i * 5,
+                        distanceKm: 5,
+                        caloriesBurned: 250 + i * 10,
                     });
             }
         });
@@ -144,9 +132,8 @@ describe("Activities Routes", () => {
                 .set("Authorization", `Bearer ${userToken}`);
 
             expect(res.status).toBe(200);
-            expect(res.body).toHaveProperty("data.activities");
-            expect(Array.isArray(res.body.data.activities)).toBe(true);
-            expect(res.body.data.activities.length).toBeGreaterThan(0);
+            expect(Array.isArray(res.body.data)).toBe(true);
+            expect(res.body.data.length).toBeGreaterThan(0);
         });
 
         it("devrait tester la pagination (page 1, limit 10)", async () => {
@@ -155,9 +142,9 @@ describe("Activities Routes", () => {
                 .set("Authorization", `Bearer ${userToken}`);
 
             expect(res.status).toBe(200);
-            expect(res.body.data.activities.length).toBeLessThanOrEqual(10);
-            expect(res.body.data).toHaveProperty("totalPages");
-            expect(res.body.data).toHaveProperty("currentPage", 1);
+            expect(res.body.data.length).toBeLessThanOrEqual(10);
+            expect(res.body.meta).toHaveProperty("totalPages");
+            expect(res.body.meta).toHaveProperty("page", 1);
         });
 
         it("devrait tester la pagination (page 2)", async () => {
@@ -166,16 +153,16 @@ describe("Activities Routes", () => {
                 .set("Authorization", `Bearer ${userToken}`);
 
             expect(res.status).toBe(200);
-            expect(res.body.data.currentPage).toBe(2);
+            expect(res.body.meta.page).toBe(2);
         });
 
         it("devrait filtrer par type d'activité", async () => {
             const res = await request(app)
-                .get("/api/activities?type=running")
+                .get("/api/activities?activityType=running")
                 .set("Authorization", `Bearer ${userToken}`);
 
             expect(res.status).toBe(200);
-            const allRunning = res.body.data.activities.every((a) => a.type === "running");
+            const allRunning = res.body.data.every((a) => a.activity_type === "running");
             expect(allRunning).toBe(true);
         });
 
@@ -188,8 +175,8 @@ describe("Activities Routes", () => {
                 .get("/api/activities")
                 .set("Authorization", `Bearer ${otherUserToken}`);
 
-            const user1Ids = resUser1.body.data.activities.map((a) => a.id);
-            const user2Ids = resUser2.body.data.activities.map((a) => a.id);
+            const user1Ids = resUser1.body.data.map((a) => a.activity_id);
+            const user2Ids = resUser2.body.data.map((a) => a.activity_id);
 
             const overlap = user1Ids.filter((id) => user2Ids.includes(id));
             expect(overlap.length).toBe(0);
@@ -205,22 +192,21 @@ describe("Activities Routes", () => {
                 .post("/api/activities")
                 .set("Authorization", `Bearer ${userToken}`)
                 .send({
-                    type: "running",
-                    date: new Date().toISOString().split("T")[0],
-                    duration_minutes: 30,
-                    distance_km: 5,
-                    calories_burned: 250,
+                    activityType: "running",
+                    durationMinutes: 30,
+                    distanceKm: 5,
+                    caloriesBurned: 250,
                 });
 
-            const actId = createRes.body.data.id;
+            const actId = createRes.body.data.activityId;
 
             // Essayer d'accéder avec user 2
             const res = await request(app)
                 .get(`/api/activities/${actId}`)
                 .set("Authorization", `Bearer ${otherUserToken}`);
 
-            expect(res.status).toBe(403);
-            expect(res.body.message).toMatch(/forbidden|permission|unauthorized/i);
+            expect(res.status).toBe(404);
+            expect(res.body.error.message).toMatch(/not found/i);
         });
     });
 
@@ -234,13 +220,12 @@ describe("Activities Routes", () => {
                 .post("/api/activities")
                 .set("Authorization", `Bearer ${userToken}`)
                 .send({
-                    type: "running",
-                    date: new Date().toISOString().split("T")[0],
-                    duration_minutes: 30,
-                    distance_km: 5,
-                    calories_burned: 250,
+                    activityType: "running",
+                    durationMinutes: 30,
+                    distanceKm: 5,
+                    caloriesBurned: 250,
                 });
-            testActivityId = res.body.data.id;
+            testActivityId = res.body.data.activityId;
         });
 
         it("devrait mettre à jour une activité", async () => {
@@ -248,8 +233,9 @@ describe("Activities Routes", () => {
                 .put(`/api/activities/${testActivityId}`)
                 .set("Authorization", `Bearer ${userToken}`)
                 .send({
-                    duration_minutes: 45,
-                    calories_burned: 350,
+                    activityType: "running",
+                    durationMinutes: 45,
+                    caloriesBurned: 350,
                 });
 
             expect(res.status).toBe(200);
@@ -262,10 +248,11 @@ describe("Activities Routes", () => {
                 .put(`/api/activities/${testActivityId}`)
                 .set("Authorization", `Bearer ${otherUserToken}`)
                 .send({
-                    duration_minutes: 60,
+                    activityType: "running",
+                    durationMinutes: 60,
                 });
 
-            expect(res.status).toBe(403);
+            expect(res.status).toBe(404);
         });
     });
 
@@ -279,13 +266,12 @@ describe("Activities Routes", () => {
                 .post("/api/activities")
                 .set("Authorization", `Bearer ${userToken}`)
                 .send({
-                    type: "cycling",
-                    date: new Date().toISOString().split("T")[0],
-                    duration_minutes: 60,
-                    distance_km: 20,
-                    calories_burned: 500,
+                    activityType: "cycling",
+                    durationMinutes: 60,
+                    distanceKm: 20,
+                    caloriesBurned: 500,
                 });
-            testActivityId = res.body.data.id;
+            testActivityId = res.body.data.activityId;
         });
 
         it("devrait supprimer une activité", async () => {
@@ -309,21 +295,20 @@ describe("Activities Routes", () => {
                 .post("/api/activities")
                 .set("Authorization", `Bearer ${userToken}`)
                 .send({
-                    type: "walking",
-                    date: new Date().toISOString().split("T")[0],
-                    duration_minutes: 20,
-                    distance_km: 2,
-                    calories_burned: 100,
+                    activityType: "walking",
+                    durationMinutes: 20,
+                    distanceKm: 2,
+                    caloriesBurned: 100,
                 });
 
-            const actId = createRes.body.data.id;
+            const actId = createRes.body.data.activityId;
 
             // Essayer de supprimer avec un autre utilisateur
             const res = await request(app)
                 .delete(`/api/activities/${actId}`)
                 .set("Authorization", `Bearer ${otherUserToken}`);
 
-            expect(res.status).toBe(403);
+            expect(res.status).toBe(404);
         });
     });
 });

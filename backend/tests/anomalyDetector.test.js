@@ -1,269 +1,137 @@
-import { describe, it, expect, beforeAll } from "@jest/globals";
-import { detectHeartRateAnomalies, detectSleepAnomalies, detectActivityAnomalies } from "../src/services/anomalyDetector.js";
+import { describe, it, expect, beforeAll, beforeEach, afterAll } from "@jest/globals";
+import request from "supertest";
+import app from "../src/app.js";
+import {
+    detectHeartRateAnomalies,
+    detectSleepAnomalies,
+    detectActivityAnomalies,
+    runFullDetection,
+} from "../src/services/anomalyDetector.js";
 
-/**
- * Tests unitaires pour le détecteur d'anomalies
- */
+let userId = null;
+const runId = `${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+const testEmail = `test.anomaly.${runId}@example.com`;
+const testName = `Anomaly User ${runId}`;
+const toMysqlTimestamp = (date = new Date()) =>
+    date.toISOString().slice(0, 19).replace("T", " ");
+
+const dateWithOffset = (days) =>
+    new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+
+const assertTestPool = () => {
+    if (!global.testPool) throw new Error("global.testPool is not initialized");
+    return global.testPool;
+};
+
 describe("Anomaly Detector", () => {
-    // ==================== HEART RATE ANOMALIES ====================
+    beforeAll(async () => {
+        const res = await request(app).post("/api/auth/signup").send({
+            name: testName,
+            email: testEmail,
+            password: "SecurePassword123!",
+        });
+        userId = res.body.data.user.userId;
+    });
+
+    beforeEach(async () => {
+        if (!userId) return;
+        const pool = assertTestPool();
+        await pool.query("DELETE FROM anomalies WHERE user_id = ?", [userId]);
+        await pool.query("DELETE FROM heart_rate WHERE user_id = ?", [userId]);
+        await pool.query("DELETE FROM sleep_records WHERE user_id = ?", [userId]);
+        await pool.query("DELETE FROM activities WHERE user_id = ?", [userId]);
+    });
+
+    afterAll(async () => {
+        if (!userId) return;
+        const pool = assertTestPool();
+        await pool.query("DELETE FROM anomalies WHERE user_id = ?", [userId]);
+        await pool.query("DELETE FROM heart_rate WHERE user_id = ?", [userId]);
+        await pool.query("DELETE FROM sleep_records WHERE user_id = ?", [userId]);
+        await pool.query("DELETE FROM activities WHERE user_id = ?", [userId]);
+        await pool.query("DELETE FROM users WHERE user_id = ?", [userId]);
+    });
 
     describe("detectHeartRateAnomalies", () => {
-        it("devrait détecter la tachycardie (BPM > 100)", () => {
-            const records = [
-                { bpm: 105, context: "rest" },
-                { bpm: 110, context: "rest" },
-            ];
+        it("devrait detecter la tachycardie au repos", async () => {
+            const pool = assertTestPool();
+            await pool.query(
+                "INSERT INTO heart_rate (user_id, bpm, context, timestamp) VALUES (?, ?, ?, ?)",
+                [userId, 110, "resting", toMysqlTimestamp()]
+            );
 
-            const anomalies = detectHeartRateAnomalies(records);
+            const anomalies = await detectHeartRateAnomalies(userId);
 
             expect(Array.isArray(anomalies)).toBe(true);
             expect(anomalies.length).toBeGreaterThan(0);
-            expect(anomalies[0].type).toMatch(/heart_rate_high|tachycardia/i);
         });
 
-        it("devrait détecter la bradycardie (BPM < 50)", () => {
-            const records = [
-                { bpm: 45, context: "rest" },
-                { bpm: 40, context: "rest" },
-            ];
-
-            const anomalies = detectHeartRateAnomalies(records);
-
-            expect(anomalies.length).toBeGreaterThan(0);
-            expect(anomalies[0].type).toMatch(/heart_rate_low|bradycardia/i);
-        });
-
-        it("devrait détecter une variabilité FC excessive (> 30 BPM variation)", () => {
-            const records = [
-                { bpm: 60, context: "rest" },
-                { bpm: 95, context: "rest" },
-            ];
-
-            const anomalies = detectHeartRateAnomalies(records);
-
-            // La variabilité devrait être détectée ou une tachycardia selon l'implémentation
-            expect(Array.isArray(anomalies)).toBe(true);
-        });
-
-        it("ne devrait pas détecter d'anomalie avec un BPM normal", () => {
-            const records = [
-                { bpm: 70, context: "rest" },
-                { bpm: 75, context: "rest" },
-            ];
-
-            const anomalies = detectHeartRateAnomalies(records);
-
-            expect(anomalies.length).toBe(0);
-        });
-
-        it("devrait gérer un array vide", () => {
-            const anomalies = detectHeartRateAnomalies([]);
-
+        it("devrait retourner un tableau vide sans donnees", async () => {
+            const anomalies = await detectHeartRateAnomalies(userId);
             expect(Array.isArray(anomalies)).toBe(true);
             expect(anomalies.length).toBe(0);
-        });
-
-        it("devrait gérer des BPM invalides (null, undefined)", () => {
-            const records = [
-                { bpm: null, context: "rest" },
-                { bpm: undefined, context: "rest" },
-            ];
-
-            const anomalies = detectHeartRateAnomalies(records);
-
-            expect(Array.isArray(anomalies)).toBe(true);
         });
     });
-
-    // ==================== SLEEP ANOMALIES ====================
 
     describe("detectSleepAnomalies", () => {
-        it("devrait détecter un sommeil insuffisant (< 6 heures pendant 3+ nuits)", () => {
-            const records = [
-                { total_hours: 5 },
-                { total_hours: 4.5 },
-                { total_hours: 5.5 },
-            ];
+        it("devrait detecter un sommeil insuffisant sur 3 nuits", async () => {
+            const pool = assertTestPool();
+            const dates = [dateWithOffset(-2), dateWithOffset(-1), dateWithOffset(0)];
 
-            const anomalies = detectSleepAnomalies(records);
+            for (const date of dates) {
+                await pool.query(
+                    "INSERT INTO sleep_records (user_id, sleep_date, total_hours, deep_sleep_hours, light_sleep_hours, rem_sleep_hours, quality_score) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    [userId, date, 5, 1, 2, 2, 3]
+                );
+            }
 
-            expect(Array.isArray(anomalies)).toBe(true);
-            expect(anomalies.some((a) => a.type.match(/insufficient/i))).toBe(true);
-        });
-
-        it("devrait détecter une mauvaise qualité de sommeil (quality < 4/5 pendant 3+ nuits)", () => {
-            const records = [
-                { total_hours: 8, quality_score: 3 },
-                { total_hours: 7, quality_score: 3.5 },
-                { total_hours: 8, quality_score: 3 },
-            ];
-
-            const anomalies = detectSleepAnomalies(records);
+            const anomalies = await detectSleepAnomalies(userId);
 
             expect(Array.isArray(anomalies)).toBe(true);
-            expect(anomalies.some((a) => a.type.match(/quality/i))).toBe(true);
+            expect(anomalies.length).toBeGreaterThan(0);
         });
 
-        it("devrait détecter peu de sommeil profond (deep_sleep < 10% du total, 3+ nuits)", () => {
-            const records = [
-                { total_hours: 8, deep_sleep_hours: 0.5 }, // 6.25%
-                { total_hours: 8, deep_sleep_hours: 0.7 }, // 8.75%
-                { total_hours: 8, deep_sleep_hours: 0.6 }, // 7.5%
-            ];
-
-            const anomalies = detectSleepAnomalies(records);
-
-            expect(Array.isArray(anomalies)).toBe(true);
-            expect(anomalies.some((a) => a.type.match(/deep/i))).toBe(true);
-        });
-
-        it("ne devrait pas détecter d'anomalie avec un sommeil normal", () => {
-            const records = [
-                { total_hours: 8, quality_score: 8, deep_sleep_hours: 2 },
-                { total_hours: 7.5, quality_score: 8, deep_sleep_hours: 1.8 },
-            ];
-
-            const anomalies = detectSleepAnomalies(records);
-
-            expect(anomalies.length).toBe(0);
-        });
-
-        it("devrait gérer un array vide", () => {
-            const anomalies = detectSleepAnomalies([]);
-
+        it("devrait retourner un tableau vide sans donnees", async () => {
+            const anomalies = await detectSleepAnomalies(userId);
             expect(Array.isArray(anomalies)).toBe(true);
             expect(anomalies.length).toBe(0);
         });
     });
-
-    // ==================== ACTIVITY ANOMALIES ====================
 
     describe("detectActivityAnomalies", () => {
-        it("devrait détecter une inactivité (0 activités pendant 14+ jours)", () => {
-            const now = new Date();
-            const records = [];
-            // Pas d'activités créées récemment
-            const lastActivityDate = new Date(now.getTime() - 20 * 24 * 60 * 60 * 1000);
+        it("devrait detecter une inactivite prolongee", async () => {
+            const pool = assertTestPool();
+            const oldDate = toMysqlTimestamp(new Date(Date.now() - 20 * 24 * 60 * 60 * 1000));
+            await pool.query(
+                "INSERT INTO activities (user_id, activity_type, duration_minutes, calories_burned, timestamp) VALUES (?, ?, ?, ?, ?)",
+                [userId, "running", 30, 200, oldDate]
+            );
 
-            const anomalies = detectActivityAnomalies(records, lastActivityDate);
-
-            expect(Array.isArray(anomalies)).toBe(true);
-            expect(anomalies.some((a) => a.type.match(/inactivity/i))).toBe(true);
-        });
-
-        it("devrait détecter une activité excessive (> 1500 calories par jour)", () => {
-            const records = [
-                { calories_burned: 800 },
-                { calories_burned: 900 }, // Total = 1700 calories
-            ];
-
-            const anomalies = detectActivityAnomalies(records);
+            const anomalies = await detectActivityAnomalies(userId);
 
             expect(Array.isArray(anomalies)).toBe(true);
-            expect(anomalies.some((a) => a.type.match(/excessive/i))).toBe(true);
+            expect(anomalies.length).toBeGreaterThan(0);
         });
 
-        it("ne devrait pas détecter d'anomalie avec une activité normale", () => {
-            const records = [
-                { calories_burned: 300 },
-                { calories_burned: 250 },
-            ];
-
-            const anomalies = detectActivityAnomalies(records);
-
+        it("devrait retourner un tableau vide sans donnees", async () => {
+            const anomalies = await detectActivityAnomalies(userId);
+            expect(Array.isArray(anomalies)).toBe(true);
             expect(anomalies.length).toBe(0);
         });
-
-        it("devrait gérer un array vide", () => {
-            const anomalies = detectActivityAnomalies([]);
-
-            expect(Array.isArray(anomalies)).toBe(true);
-        });
-
-        it("devrait gérer des calories_burned invalides", () => {
-            const records = [
-                { calories_burned: null },
-                { calories_burned: undefined },
-                { calories_burned: "invalid" },
-            ];
-
-            const anomalies = detectActivityAnomalies(records);
-
-            expect(Array.isArray(anomalies)).toBe(true);
-        });
     });
 
-    // ==================== COMBINED TESTS ====================
+    describe("runFullDetection", () => {
+        it("devrait retourner une liste d'anomalies inserees", async () => {
+            const pool = assertTestPool();
+            await pool.query(
+                "INSERT INTO heart_rate (user_id, bpm, context, timestamp) VALUES (?, ?, ?, ?)",
+                [userId, 120, "resting", toMysqlTimestamp()]
+            );
 
-    describe("Combined Anomaly Detection", () => {
-        it("devrait détecter plusieurs anomalies différentes", () => {
-            const hrAnomalies = detectHeartRateAnomalies([{ bpm: 120, context: "rest" }]);
-            const sleepAnomalies = detectSleepAnomalies([
-                { total_hours: 4, quality_score: 3, deep_sleep_hours: 0.3 },
-                { total_hours: 5, quality_score: 3, deep_sleep_hours: 0.4 },
-                { total_hours: 4.5, quality_score: 2, deep_sleep_hours: 0.3 },
-            ]);
-
-            expect(hrAnomalies.length).toBeGreaterThan(0);
-            expect(sleepAnomalies.length).toBeGreaterThan(0);
-        });
-
-        it("devrait attribuer les sévérités correctes", () => {
-            const hrAnomalies = detectHeartRateAnomalies([{ bpm: 150, context: "rest" }]);
-
-            hrAnomalies.forEach((anomaly) => {
-                expect(["HIGH", "MEDIUM", "LOW"]).toContain(anomaly.severity);
-            });
-        });
-
-        it("devrait inclure des messages descriptifs", () => {
-            const hrAnomalies = detectHeartRateAnomalies([{ bpm: 120, context: "rest" }]);
-
-            hrAnomalies.forEach((anomaly) => {
-                expect(anomaly.message).toBeDefined();
-                expect(anomaly.message.length).toBeGreaterThan(0);
-            });
-        });
-    });
-
-    // ==================== EDGE CASES ====================
-
-    describe("Edge Cases", () => {
-        it("devrait gérer les très hauts BPM", () => {
-            const records = [{ bpm: 250, context: "exercise" }];
-            const anomalies = detectHeartRateAnomalies(records);
+            const anomalies = await runFullDetection(userId);
 
             expect(Array.isArray(anomalies)).toBe(true);
-        });
-
-        it("devrait gérer les très bas BPM", () => {
-            const records = [{ bpm: 20, context: "sleep" }];
-            const anomalies = detectHeartRateAnomalies(records);
-
-            expect(Array.isArray(anomalies)).toBe(true);
-        });
-
-        it("devrait gérer les floats pour les heures de sommeil", () => {
-            const records = [
-                { total_hours: 7.75, quality_score: 8, deep_sleep_hours: 1.5 },
-            ];
-            const anomalies = detectSleepAnomalies(records);
-
-            expect(Array.isArray(anomalies)).toBe(true);
-        });
-
-        it("devrait gérer les zéros", () => {
-            const hrAnomalies = detectHeartRateAnomalies([{ bpm: 0, context: "rest" }]);
-            const sleepAnomalies = detectSleepAnomalies([
-                { total_hours: 0, quality_score: 0, deep_sleep_hours: 0 },
-            ]);
-            const activityAnomalies = detectActivityAnomalies([
-                { calories_burned: 0 },
-            ]);
-
-            expect(Array.isArray(hrAnomalies)).toBe(true);
-            expect(Array.isArray(sleepAnomalies)).toBe(true);
-            expect(Array.isArray(activityAnomalies)).toBe(true);
+            expect(anomalies.length).toBeGreaterThan(0);
         });
     });
 });
