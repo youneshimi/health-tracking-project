@@ -9,6 +9,22 @@
 
 ---
 
+## 🚀 CI/CD
+
+Le projet utilise GitHub Actions pour automatiser :
+
+- Tests backend
+- Build frontend
+- Build Docker
+
+📍 Pipeline visible ici :
+https://github.com/youneshimi/health-tracking-project/actions
+
+### Exemple de workflow
+
+- Push → Tests lancés automatiquement
+- PR → Validation automatique
+
 ## ✅ Services & URLs
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:4000
