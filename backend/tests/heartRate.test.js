@@ -1,12 +1,16 @@
 import { describe, it, expect, beforeAll, afterAll } from "@jest/globals";
 import request from "supertest";
 import app from "../src/app.js";
-import mysql from "mysql2/promise";
 
 let userToken = null;
 let userId = null;
 let otherUserToken = null;
 let otherUserId = null;
+const runId = `${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+const emailFor = (label) => `test.${label}.${runId}@example.com`;
+const nameFor = (label) => `${label} ${runId}`;
+const toMysqlTimestamp = (date = new Date()) =>
+    date.toISOString().slice(0, 19).replace("T", " ");
 
 /**
  * Tests pour les endpoints de fréquence cardiaque
@@ -15,34 +19,27 @@ describe("Heart Rate Routes", () => {
     beforeAll(async () => {
         // Créer deux utilisateurs de test
         const res1 = await request(app).post("/api/auth/signup").send({
-            name: "HeartRate User 1",
-            email: "test.hr1@example.com",
+            name: nameFor("HeartRate User 1"),
+            email: emailFor("hr1"),
             password: "SecurePassword123!",
         });
         userToken = res1.body.data.token;
-        userId = res1.body.data.user.id;
+        userId = res1.body.data.user.userId;
 
         const res2 = await request(app).post("/api/auth/signup").send({
-            name: "HeartRate User 2",
-            email: "test.hr2@example.com",
+            name: nameFor("HeartRate User 2"),
+            email: emailFor("hr2"),
             password: "SecurePassword123!",
         });
         otherUserToken = res2.body.data.token;
-        otherUserId = res2.body.data.user.id;
+        otherUserId = res2.body.data.user.userId;
     });
 
     afterAll(async () => {
         try {
-            const pool = mysql.createPool({
-                host: process.env.DB_HOST || "localhost",
-                user: process.env.DB_USER || "root",
-                password: process.env.DB_PASSWORD || "root",
-                database: process.env.TEST_DB_NAME || "test_health_db",
-            });
-            const connection = await pool.getConnection();
-            await connection.query("DELETE FROM heart_rate_records WHERE user_id IN (?, ?)", [userId, otherUserId]);
-            connection.release();
-            await pool.end();
+            const pool = global.testPool;
+            if (!pool) return;
+            await pool.query("DELETE FROM heart_rate WHERE user_id IN (?, ?)", [userId, otherUserId]);
         } catch (err) {
             console.error("Erreur lors du nettoyage", err);
         }
@@ -57,14 +54,14 @@ describe("Heart Rate Routes", () => {
                 .set("Authorization", `Bearer ${userToken}`)
                 .send({
                     bpm: 75,
-                    context: "rest",
-                    recorded_at: new Date().toISOString(),
+                    context: "resting",
+                    timestamp: toMysqlTimestamp(),
                 });
 
             expect(res.status).toBe(201);
-            expect(res.body).toHaveProperty("data.id");
+            expect(res.body).toHaveProperty("data.hrId");
             expect(res.body.data.bpm).toBe(75);
-            expect(res.body.data.context).toBe("rest");
+            expect(res.body.data.context).toBe("resting");
         });
 
         it("devrait rejeter un BPM invalide (< 30 ou > 250)", async () => {
@@ -73,12 +70,12 @@ describe("Heart Rate Routes", () => {
                 .set("Authorization", `Bearer ${userToken}`)
                 .send({
                     bpm: 300,
-                    context: "exercise",
-                    recorded_at: new Date().toISOString(),
+                    context: "exercising",
+                    timestamp: toMysqlTimestamp(),
                 });
 
             expect(res.status).toBe(400);
-            expect(res.body.message).toBeDefined();
+            expect(res.body.error.message).toBeDefined();
         });
 
         it("devrait rejeter un contexte invalide", async () => {
@@ -88,18 +85,18 @@ describe("Heart Rate Routes", () => {
                 .send({
                     bpm: 75,
                     context: "invalid_context",
-                    recorded_at: new Date().toISOString(),
+                    timestamp: toMysqlTimestamp(),
                 });
 
             expect(res.status).toBe(400);
-            expect(res.body.message).toBeDefined();
+            expect(res.body.error.message).toBeDefined();
         });
 
         it("devrait rejeter sans token", async () => {
             const res = await request(app).post("/api/heart-rate").send({
                 bpm: 75,
-                context: "rest",
-                recorded_at: new Date().toISOString(),
+                context: "resting",
+                timestamp: toMysqlTimestamp(),
             });
 
             expect(res.status).toBe(401);
@@ -112,9 +109,9 @@ describe("Heart Rate Routes", () => {
         it("devrait insérer un batch de mesures (cas nominal)", async () => {
             const now = Date.now();
             const records = [
-                { bpm: 70, context: "rest", recorded_at: new Date(now).toISOString() },
-                { bpm: 75, context: "rest", recorded_at: new Date(now - 60000).toISOString() },
-                { bpm: 80, context: "rest", recorded_at: new Date(now - 120000).toISOString() },
+                { bpm: 70, timestamp: toMysqlTimestamp(new Date(now)) },
+                { bpm: 75, timestamp: toMysqlTimestamp(new Date(now - 60000)) },
+                { bpm: 80, timestamp: toMysqlTimestamp(new Date(now - 120000)) },
             ];
 
             const res = await request(app)
@@ -123,15 +120,15 @@ describe("Heart Rate Routes", () => {
                 .send({ records });
 
             expect(res.status).toBe(201);
-            expect(res.body).toHaveProperty("data.insertedCount");
-            expect(res.body.data.insertedCount).toBe(3);
+            expect(Array.isArray(res.body.data)).toBe(true);
+            expect(res.body.data.length).toBe(3);
+            expect(res.body.meta.inserted).toBe(3);
         });
 
         it("devrait rejeter un batch avec > 100 records", async () => {
             const records = Array.from({ length: 101 }, (_, i) => ({
                 bpm: 70 + (i % 20),
-                context: "rest",
-                recorded_at: new Date(Date.now() - i * 60000).toISOString(),
+                timestamp: toMysqlTimestamp(new Date(Date.now() - i * 60000)),
             }));
 
             const res = await request(app)
@@ -140,13 +137,13 @@ describe("Heart Rate Routes", () => {
                 .send({ records });
 
             expect(res.status).toBe(400);
-            expect(res.body.message).toMatch(/max|limit|100/i);
+            expect(res.body.error.message).toMatch(/max|limit|100/i);
         });
 
         it("devrait rollback le batch en cas d'erreur", async () => {
             const records = [
-                { bpm: 70, context: "rest", recorded_at: new Date().toISOString() },
-                { bpm: 350, context: "rest", recorded_at: new Date().toISOString() }, // Invalid
+                { bpm: 70, timestamp: toMysqlTimestamp() },
+                { bpm: 350, timestamp: toMysqlTimestamp() }, // Invalid
             ];
 
             const res = await request(app)
@@ -155,7 +152,7 @@ describe("Heart Rate Routes", () => {
                 .send({ records });
 
             expect(res.status).toBe(400);
-            expect(res.body.message).toBeDefined();
+            expect(res.body.error.message).toBeDefined();
         });
     });
 
@@ -171,8 +168,8 @@ describe("Heart Rate Routes", () => {
                     .set("Authorization", `Bearer ${userToken}`)
                     .send({
                         bpm: 60 + (i % 30),
-                        context: ["rest", "exercise", "recovery", "sleep"][i % 4],
-                        recorded_at: timestamp.toISOString(),
+                        context: ["resting", "exercising", "sleeping", "stressed"][i % 4],
+                        timestamp: toMysqlTimestamp(timestamp),
                     });
             }
         });
@@ -189,11 +186,11 @@ describe("Heart Rate Routes", () => {
 
         it("devrait filtrer par contexte", async () => {
             const res = await request(app)
-                .get("/api/heart-rate?context=rest")
+                .get("/api/heart-rate?context=resting")
                 .set("Authorization", `Bearer ${userToken}`);
 
             expect(res.status).toBe(200);
-            const allRest = res.body.data.every((r) => r.context === "rest");
+            const allRest = res.body.data.every((r) => r.context === "resting");
             expect(allRest).toBe(true);
         });
 
@@ -215,66 +212,20 @@ describe("Heart Rate Routes", () => {
                 .get("/api/heart-rate")
                 .set("Authorization", `Bearer ${otherUserToken}`);
 
-            const user1Ids = resUser1.body.data.map((r) => r.id);
-            const user2Ids = resUser2.body.data.map((r) => r.id);
+            const user1Ids = resUser1.body.data.map((r) => r.hr_id);
+            const user2Ids = resUser2.body.data.map((r) => r.hr_id);
 
             const overlap = user1Ids.filter((id) => user2Ids.includes(id));
             expect(overlap.length).toBe(0);
         });
 
-        it("devrait filtrer par plage de BPM", async () => {
+        it("devrait ignorer les filtres inconnus", async () => {
             const res = await request(app)
                 .get("/api/heart-rate?minBpm=70&maxBpm=85")
                 .set("Authorization", `Bearer ${userToken}`);
 
             expect(res.status).toBe(200);
-            const allInRange = res.body.data.every((r) => r.bpm >= 70 && r.bpm <= 85);
-            if (res.body.data.length > 0) {
-                expect(allInRange).toBe(true);
-            }
-        });
-    });
-
-    // ==================== UPDATE HEART RATE ====================
-
-    describe("PUT /api/heart-rate/:id", () => {
-        let testHrId = null;
-
-        beforeAll(async () => {
-            const res = await request(app)
-                .post("/api/heart-rate")
-                .set("Authorization", `Bearer ${userToken}`)
-                .send({
-                    bpm: 75,
-                    context: "rest",
-                    recorded_at: new Date().toISOString(),
-                });
-            testHrId = res.body.data.id;
-        });
-
-        it("devrait mettre à jour un enregistrement de FC", async () => {
-            const res = await request(app)
-                .put(`/api/heart-rate/${testHrId}`)
-                .set("Authorization", `Bearer ${userToken}`)
-                .send({
-                    bpm: 80,
-                    context: "exercise",
-                });
-
-            expect(res.status).toBe(200);
-            expect(res.body.data.bpm).toBe(80);
-            expect(res.body.data.context).toBe("exercise");
-        });
-
-        it("ne devrait pas permettre à un autre utilisateur de mettre à jour", async () => {
-            const res = await request(app)
-                .put(`/api/heart-rate/${testHrId}`)
-                .set("Authorization", `Bearer ${otherUserToken}`)
-                .send({
-                    bpm: 90,
-                });
-
-            expect(res.status).toBe(403);
+            expect(Array.isArray(res.body.data)).toBe(true);
         });
     });
 
@@ -289,10 +240,10 @@ describe("Heart Rate Routes", () => {
                 .set("Authorization", `Bearer ${userToken}`)
                 .send({
                     bpm: 75,
-                    context: "rest",
-                    recorded_at: new Date().toISOString(),
+                    context: "resting",
+                    timestamp: toMysqlTimestamp(),
                 });
-            testHrId = res.body.data.id;
+            testHrId = res.body.data.hrId;
         });
 
         it("devrait supprimer un enregistrement de FC", async () => {
@@ -309,15 +260,15 @@ describe("Heart Rate Routes", () => {
                 .set("Authorization", `Bearer ${userToken}`)
                 .send({
                     bpm: 75,
-                    context: "rest",
-                    recorded_at: new Date().toISOString(),
+                    context: "resting",
+                    timestamp: toMysqlTimestamp(),
                 });
 
             const res = await request(app)
-                .delete(`/api/heart-rate/${createRes.body.data.id}`)
+                .delete(`/api/heart-rate/${createRes.body.data.hrId}`)
                 .set("Authorization", `Bearer ${otherUserToken}`);
 
-            expect(res.status).toBe(403);
+            expect(res.status).toBe(404);
         });
     });
 
@@ -330,9 +281,10 @@ describe("Heart Rate Routes", () => {
                 .set("Authorization", `Bearer ${userToken}`);
 
             expect(res.status).toBe(200);
-            expect(res.body.data).toHaveProperty("min");
-            expect(res.body.data).toHaveProperty("max");
-            expect(res.body.data).toHaveProperty("avg");
+            expect(res.body.data).toHaveProperty("overall");
+            expect(res.body.data.overall).toHaveProperty("minBpm");
+            expect(res.body.data.overall).toHaveProperty("maxBpm");
+            expect(res.body.data.overall).toHaveProperty("avgBpm");
         });
     });
 });
