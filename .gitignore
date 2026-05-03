@@ -15,3 +15,5 @@ backend/dist
 # OS / editor
 .DS_Store
 .vscode
+
+backend/coverage/
