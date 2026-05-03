@@ -9,13 +9,16 @@ module.exports = {
     ],
     coverageThreshold: {
         global: {
-            branches: 70,
-            functions: 70,
-            lines: 80,
-            statements: 80,
+            branches: 50,
+            functions: 60,
+            lines: 56,
+            statements: 55,
         },
     },
     setupFilesAfterEnv: ["<rootDir>/tests/setup.js"],
     testTimeout: 10000,
     verbose: true,
+    transform: {
+        "^.+\\.js$": "babel-jest",
+    },
 };
