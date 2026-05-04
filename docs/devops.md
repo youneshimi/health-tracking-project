@@ -67,7 +67,18 @@ Le pipeline permet de garantir :
 
 ## 5. Améliorations possibles
 
-- Déploiement automatique (CD)
 - Ajout d’un environnement staging
 - Analyse de qualité (SonarQube)
 - Scan sécurité (Snyk, Trivy)
+
+## Déploiement automatique
+
+Un workflow GitHub Actions `deploy-ec2.yml` déclenche automatiquement le déploiement sur l’instance AWS EC2 après un push ou merge sur `main`.
+
+Le workflow :
+1. se connecte au serveur EC2 en SSH ;
+2. récupère la dernière version du code avec `git pull` ;
+3. relance la stack Docker Compose de production ;
+4. vérifie que le backend répond via `/health`.
+
+Cela permet de passer d’un déploiement manuel à un déploiement continu.
