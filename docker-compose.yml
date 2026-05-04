@@ -60,29 +60,38 @@ services:
       start_period: 15s
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        REACT_APP_API_URL: http://localhost:4000
     container_name: htp-frontend
     restart: unless-stopped
-    environment:
-      REACT_APP_API_URL: http://localhost:4000
-      HOST: 0.0.0.0
-      PORT: 3000
     ports:
-      - "3000:3000"
+      - "3000:80"
     depends_on:
       backend:
         condition: service_healthy
     healthcheck:
-      # ✅ test TCP simple (pas besoin de wget)
-      test:
-        [
-          "CMD-SHELL",
-          'node -e "require(''net'').connect(3000,''127.0.0.1'').on(''connect'',()=>process.exit(0)).on(''error'',()=>process.exit(1))"',
-        ]
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/ || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 20
       start_period: 25s
+
+  seed:
+    build: ./backend
+    container_name: htp-seed
+    command: node src/scripts/initSeed.js
+    environment:
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      DB_USER: app
+      DB_PASSWORD: app
+      DB_NAME: health_db
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: "no"
 
   prometheus:
     image: prom/prometheus:latest

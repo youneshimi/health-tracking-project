@@ -6,21 +6,20 @@ import styles from "./Layout.module.css";
 export default function Sidebar({ isCollapsed, onToggle }) {
     const location = useLocation();
     const [unreadAnomalies, setUnreadAnomalies] = useState(0);
-    const [isLoading, setIsLoading] = useState(true);
+    const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:4000";
+    const isKubernetes = /30080|kubernetes|health-platform/i.test(apiUrl);
+    const runtimeLabel = isKubernetes ? "Kubernetes" : "Docker";
 
     // Récupérer le nombre d'anomalies non lues
     useEffect(() => {
         const fetchAnomalies = async () => {
             try {
-                setIsLoading(true);
                 const response = await client.get("/api/anomalies/summary");
                 const unreadCount = response.data.data.unread_count || 0;
                 setUnreadAnomalies(unreadCount);
             } catch (error) {
                 console.error("Erreur lors de la récupération des anomalies:", error);
                 setUnreadAnomalies(0);
-            } finally {
-                setIsLoading(false);
             }
         };
 
@@ -75,16 +74,14 @@ export default function Sidebar({ isCollapsed, onToggle }) {
 
             {/* Footer */}
             <div className={styles.sidebarFooter}>
-                <p
-                    style={{
-                        fontSize: "12px",
-                        color: "#94a3b8",
-                        margin: "0 0 8px 0",
-                        textAlign: "center",
-                    }}
-                >
-                    v1.0.0
-                </p>
+                <p className={styles.sidebarVersion}>v1.0.0</p>
+                <div className={styles.runtimeBadge}>
+                    <span
+                        className={styles.runtimeDot}
+                        style={{ backgroundColor: isKubernetes ? "#10b981" : "#60a5fa" }}
+                    ></span>
+                    <span className={styles.runtimeLabel}>{runtimeLabel}</span>
+                </div>
             </div>
         </aside>
     );

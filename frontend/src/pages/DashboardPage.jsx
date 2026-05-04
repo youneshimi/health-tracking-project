@@ -144,14 +144,27 @@ const CaloriesIcon = () => (
  */
 export default function DashboardPage() {
     // Hooks
-    const { activities, isLoading: activitiesLoading } = useActivities();
-    const { sleepRecords, isLoading: sleepLoading } = useSleep();
-    const { heartRateRecords, isLoading: hrLoading } = useHeartRate();
+    const { activities, isLoading: activitiesLoading, getActivities } = useActivities();
+    const { sleepRecords, isLoading: sleepLoading, getSleepRecords } = useSleep();
+    const { heartRateRecords, isLoading: hrLoading, getHeartRateRecords } = useHeartRate();
     const { anomalies, isLoading: anomaliesLoading, getAnomalies } = useAnomalies();
 
     // États
     const [kpiData, setKpiData] = useState(null);
     const [chartData, setChartData] = useState(null);
+
+    // Charger les séries principales
+    useEffect(() => {
+        const loadDashboardData = async () => {
+            await Promise.all([
+                getActivities(),
+                getSleepRecords(),
+                getHeartRateRecords(),
+            ]);
+        };
+
+        loadDashboardData();
+    }, [getActivities, getSleepRecords, getHeartRateRecords]);
 
     // Charger les données
     useEffect(() => {
@@ -180,7 +193,7 @@ export default function DashboardPage() {
     // Charger les anomalies
     useEffect(() => {
         getAnomalies(3);
-    }, []);
+    }, [getAnomalies]);
 
     const isLoading =
         activitiesLoading || sleepLoading || hrLoading || !kpiData || !chartData;

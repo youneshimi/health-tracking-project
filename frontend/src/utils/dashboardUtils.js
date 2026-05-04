@@ -268,22 +268,23 @@ export function formatSleepChartData(sleepRecords) {
  */
 export function formatHeartRateChartData(heartRateRecords) {
     return heartRateRecords
-        .slice(-50)
-        .map((hr, idx) => ({
-            index: idx,
-            time: new Date(hr.recorded_at).toLocaleTimeString("fr-FR", {
-                hour: "2-digit",
-                minute: "2-digit",
-            }),
-            bpm: hr.bpm || 0,
-            date: new Date(hr.recorded_at).toLocaleDateString("fr-FR"),
-        }))
-        .sort((a, b) => {
-            const dateA = new Date(a.date);
-            const dateB = new Date(b.date);
-            if (dateA.getTime() !== dateB.getTime()) {
-                return dateA - dateB;
-            }
-            return a.index - b.index;
-        });
+        .slice(0, 50)
+        .map((hr) => {
+            const ts = hr.recorded_at || hr.timestamp;
+            const dateObj = new Date(ts);
+            return {
+                ts,
+                time: dateObj.toLocaleTimeString("fr-FR", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                }),
+                bpm: hr.bpm || 0,
+            };
+        })
+        .sort((a, b) => new Date(a.ts) - new Date(b.ts))
+        .map(({ ts, time, bpm }) => ({
+            ts,
+            time,
+            bpm,
+        }));
 }

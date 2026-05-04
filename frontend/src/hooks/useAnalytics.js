@@ -1,6 +1,64 @@
 import { useState, useCallback } from "react";
 import client from "../api/client";
 
+function mapTrendResponse(raw) {
+    const points = (raw?.data || []).map((item, index) => ({
+        date: item.date,
+        value: Number(item.value || 0),
+        value_trend:
+            Number(raw?.regression?.slope || 0) * index +
+            Number(raw?.regression?.intercept || 0),
+    }));
+
+    return {
+        metric: raw?.metric || null,
+        period: raw?.period || null,
+        points,
+        regression: raw?.regression || { slope: 0, intercept: 0, r_squared: 0 },
+        regression_line: true,
+    };
+}
+
+function mapPredictionResponse(raw, metric) {
+    const selected = raw?.[metric] || null;
+    if (!selected || !selected.j7 || !selected.j30) {
+        return null;
+    }
+
+    const directionValue =
+        selected.trend_direction === "up"
+            ? 1
+            : selected.trend_direction === "down"
+                ? -1
+                : 0;
+
+    return {
+        prediction_7d: {
+            value: Number(selected.j7.predicted_value || 0),
+            trend_direction: directionValue,
+            confidence_interval_lower: Number(selected.j7.confidence_interval_lower || 0),
+            confidence_interval_upper: Number(selected.j7.confidence_interval_upper || 0),
+        },
+        prediction_30d: {
+            value: Number(selected.j30.predicted_value || 0),
+            trend_direction: directionValue,
+            confidence_interval_lower: Number(selected.j30.confidence_interval_lower || 0),
+            confidence_interval_upper: Number(selected.j30.confidence_interval_upper || 0),
+        },
+    };
+}
+
+function mapCorrelationResponse(raw) {
+    return {
+        sleep_hr_next_day: {
+            coefficient: Number(raw?.sleep_impacts_heart_rate?.coefficient || 0),
+        },
+        activity_sleep_next_day: {
+            coefficient: Number(raw?.activity_improves_sleep?.coefficient || 0),
+        },
+    };
+}
+
 export function useAnalytics() {
     const [trendsData, setTrendsData] = useState(null);
     const [predictionsData, setPredictionsData] = useState(null);
@@ -19,8 +77,9 @@ export function useAnalytics() {
             const response = await client.get("/api/analytics/trends", {
                 params: { metric, period },
             });
-            setTrendsData(response.data.data);
-            return response.data.data;
+            const mapped = mapTrendResponse(response?.data?.data || {});
+            setTrendsData(mapped);
+            return mapped;
         } catch (err) {
             const message = err.response?.data?.message || "Erreur lors du chargement des tendances";
             setError(message);
@@ -40,8 +99,9 @@ export function useAnalytics() {
             const response = await client.get("/api/analytics/predictions", {
                 params: { metric },
             });
-            setPredictionsData(response.data.data);
-            return response.data.data;
+            const mapped = mapPredictionResponse(response?.data?.data || {}, metric);
+            setPredictionsData(mapped);
+            return mapped;
         } catch (err) {
             const message = err.response?.data?.message || "Erreur lors du chargement des prédictions";
             setError(message);
@@ -59,8 +119,9 @@ export function useAnalytics() {
         setError(null);
         try {
             const response = await client.get("/api/analytics/correlations");
-            setCorrelationsData(response.data.data);
-            return response.data.data;
+            const mapped = mapCorrelationResponse(response?.data?.data || {});
+            setCorrelationsData(mapped);
+            return mapped;
         } catch (err) {
             const message = err.response?.data?.message || "Erreur lors du chargement des corrélations";
             setError(message);
