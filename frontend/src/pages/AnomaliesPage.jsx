@@ -4,26 +4,26 @@ import { useAnomalies } from "../hooks/useAnomalies";
 import styles from "./DataPages.module.css";
 
 const SEVERITY_COLORS = {
-    HIGH: "#dc2626",
-    MEDIUM: "#f59e0b",
-    LOW: "#10b981",
+    high: "#dc2626",
+    medium: "#f59e0b",
+    low: "#10b981",
 };
 
 const SEVERITY_LABELS = {
-    HIGH: "Critique",
-    MEDIUM: "Modérée",
-    LOW: "Faible",
+    high: "Critique",
+    medium: "ModÃ©rÃ©e",
+    low: "Faible",
 };
 
 const ANOMALY_TYPES = {
-    heart_rate_high: { label: "FC Élevée", icon: "❤️‍🔥", category: "heart_rate" },
-    heart_rate_low: { label: "FC Basse", icon: "🫀", category: "heart_rate" },
-    heart_rate_variability: { label: "Variabilité FC", icon: "📈", category: "heart_rate" },
-    insufficient_sleep: { label: "Sommeil Insuffisant", icon: "😴", category: "sleep" },
-    poor_sleep_quality: { label: "Qualité de Sommeil", icon: "😓", category: "sleep" },
-    low_deep_sleep: { label: "Peu de Sommeil Profond", icon: "💤", category: "sleep" },
-    inactivity_alert: { label: "Inactivité", icon: "🛋️", category: "activity" },
-    excessive_activity: { label: "Activité Excessive", icon: "🏃", category: "activity" },
+    heart_rate_high: { label: "FC Ã‰levÃ©e", icon: "â¤ï¸â€ðŸ”¥", category: "heart_rate" },
+    heart_rate_low: { label: "FC Basse", icon: "ðŸ«€", category: "heart_rate" },
+    heart_rate_variability: { label: "VariabilitÃ© FC", icon: "ðŸ“ˆ", category: "heart_rate" },
+    insufficient_sleep: { label: "Sommeil Insuffisant", icon: "ðŸ˜´", category: "sleep" },
+    poor_sleep_quality: { label: "QualitÃ© de Sommeil", icon: "ðŸ˜“", category: "sleep" },
+    low_deep_sleep: { label: "Peu de Sommeil Profond", icon: "ðŸ’¤", category: "sleep" },
+    inactivity_alert: { label: "InactivitÃ©", icon: "ðŸ›‹ï¸", category: "activity" },
+    excessive_activity: { label: "ActivitÃ© Excessive", icon: "ðŸƒ", category: "activity" },
 };
 
 /**
@@ -40,9 +40,9 @@ function FilterSection({ filters, setFilters }) {
                     className={styles.select}
                 >
                     <option value="">Toutes les sévérités</option>
-                    <option value="HIGH">Critique</option>
-                    <option value="MEDIUM">Modérée</option>
-                    <option value="LOW">Faible</option>
+                    <option value="high">Critique</option>
+                    <option value="medium">Modérée</option>
+                    <option value="low">Faible</option>
                 </select>
                 <select
                     value={filters.category}
@@ -63,7 +63,7 @@ function FilterSection({ filters, setFilters }) {
  * Carte Anomalie
  */
 function AnomalyCard({ anomaly }) {
-    const type = ANOMALY_TYPES[anomaly.type] || { label: anomaly.type, icon: "❓", category: "other" };
+    const type = ANOMALY_TYPES[anomaly.type] || { label: anomaly.type, icon: "â“", category: "other" };
     const timestamp = new Date(anomaly.created_at);
 
     return (
@@ -96,9 +96,9 @@ function AnomalyCard({ anomaly }) {
 
             <div className={styles.anomalyFooter}>
                 <span className={styles.anomalyTime}>
-                    {timestamp.toLocaleDateString("fr-FR")} à {timestamp.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                    {timestamp.toLocaleDateString("fr-FR")} Ã  {timestamp.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
                 </span>
-                <span className={styles.anomalyMetric}>{anomaly.metric_type || "—"}</span>
+                <span className={styles.anomalyMetric}>{anomaly.metric_type || "â€”"}</span>
             </div>
         </div>
     );
@@ -145,9 +145,9 @@ export default function AnomaliesPage() {
     const stats = useMemo(() => {
         return {
             total: anomalies.length,
-            high: anomalies.filter((a) => a.severity === "HIGH").length,
-            medium: anomalies.filter((a) => a.severity === "MEDIUM").length,
-            low: anomalies.filter((a) => a.severity === "LOW").length,
+            high: anomalies.filter((a) => a.severity === "high").length,
+            medium: anomalies.filter((a) => a.severity === "medium").length,
+            low: anomalies.filter((a) => a.severity === "low").length,
         };
     }, [anomalies]);
 
@@ -168,12 +168,12 @@ export default function AnomaliesPage() {
                     </div>
 
                     <div className={styles.statCard}>
-                        <div className={styles.statHeader} style={{ borderLeftColor: SEVERITY_COLORS.HIGH }}>
+                        <div className={styles.statHeader} style={{ borderLeftColor: SEVERITY_COLORS.high }}>
                             <h4 className={styles.statLabel}>Critiques</h4>
                         </div>
                         <div className={styles.statBody}>
                             <div className={styles.statRow}>
-                                <span className={styles.statValue} style={{ color: SEVERITY_COLORS.HIGH }}>
+                                <span className={styles.statValue} style={{ color: SEVERITY_COLORS.high }}>
                                     {stats.high}
                                 </span>
                             </div>
@@ -181,12 +181,12 @@ export default function AnomaliesPage() {
                     </div>
 
                     <div className={styles.statCard}>
-                        <div className={styles.statHeader} style={{ borderLeftColor: SEVERITY_COLORS.MEDIUM }}>
-                            <h4 className={styles.statLabel}>Modérées</h4>
+                        <div className={styles.statHeader} style={{ borderLeftColor: SEVERITY_COLORS.medium }}>
+                            <h4 className={styles.statLabel}>ModÃ©rÃ©es</h4>
                         </div>
                         <div className={styles.statBody}>
                             <div className={styles.statRow}>
-                                <span className={styles.statValue} style={{ color: SEVERITY_COLORS.MEDIUM }}>
+                                <span className={styles.statValue} style={{ color: SEVERITY_COLORS.medium }}>
                                     {stats.medium}
                                 </span>
                             </div>
@@ -194,12 +194,12 @@ export default function AnomaliesPage() {
                     </div>
 
                     <div className={styles.statCard}>
-                        <div className={styles.statHeader} style={{ borderLeftColor: SEVERITY_COLORS.LOW }}>
+                        <div className={styles.statHeader} style={{ borderLeftColor: SEVERITY_COLORS.low }}>
                             <h4 className={styles.statLabel}>Faibles</h4>
                         </div>
                         <div className={styles.statBody}>
                             <div className={styles.statRow}>
-                                <span className={styles.statValue} style={{ color: SEVERITY_COLORS.LOW }}>
+                                <span className={styles.statValue} style={{ color: SEVERITY_COLORS.low }}>
                                     {stats.low}
                                 </span>
                             </div>
@@ -213,7 +213,7 @@ export default function AnomaliesPage() {
                 {/* Liste Anomalies */}
                 <div className={styles.section}>
                     <h2 className={styles.sectionTitle}>
-                        Anomalies détectées ({filteredAnomalies.length})
+                        Anomalies dÃ©tectÃ©es ({filteredAnomalies.length})
                     </h2>
 
                     {isLoading ? (
@@ -228,9 +228,9 @@ export default function AnomaliesPage() {
                         </div>
                     ) : (
                         <div className={styles.emptyState}>
-                            <div className={styles.emptyIcon}>✨</div>
+                            <div className={styles.emptyIcon}>âœ¨</div>
                             <div className={styles.emptyTitle}>Aucune anomalie</div>
-                            <p>Tout va bien ! Continuez à maintenir vos habitudes de santé</p>
+                            <p>Tout va bien ! Continuez Ã  maintenir vos habitudes de santÃ©</p>
                         </div>
                     )}
                 </div>
@@ -238,3 +238,4 @@ export default function AnomaliesPage() {
         </Layout>
     );
 }
+

@@ -15,8 +15,8 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: ghcr.io/youneshimi/health-frontend:latest
-          imagePullPolicy: IfNotPresent
+          image: health-frontend:local
+          imagePullPolicy: Never
           ports:
             - containerPort: 80
           resources:

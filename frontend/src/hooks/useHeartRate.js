@@ -1,6 +1,19 @@
 import { useState, useCallback } from "react";
 import client from "../api/client";
 
+function normalizeHeartRateRecord(row) {
+    const timestamp = row.timestamp ?? row.recorded_at ?? null;
+    return {
+        id: row.hr_id ?? row.hrId ?? row.id ?? null,
+        hr_id: row.hr_id ?? row.hrId ?? row.id ?? null,
+        user_id: row.user_id ?? row.userId ?? null,
+        recorded_at: timestamp,
+        timestamp,
+        bpm: row.bpm ?? 0,
+        context: row.context ?? "other",
+    };
+}
+
 export function useHeartRate() {
     const [heartRateRecords, setHeartRateRecords] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -10,7 +23,7 @@ export function useHeartRate() {
      * Récupérer tous les enregistrements de fréquence cardiaque
      */
     const getHeartRateRecords = useCallback(
-        async (page = 1, limit = 10) => {
+        async (page = 1, limit = 500) => {
             setIsLoading(true);
             setError(null);
 
@@ -18,8 +31,13 @@ export function useHeartRate() {
                 const response = await client.get("/api/heart-rate", {
                     params: { page, limit },
                 });
-                setHeartRateRecords(Array.isArray(response.data.data) ? response.data.data : []);
-                return response.data.data;
+                const list = Array.isArray(response?.data?.data) ? response.data.data : [];
+                const normalized = list.map(normalizeHeartRateRecord);
+                setHeartRateRecords(normalized);
+                return {
+                    heartRateRecords: normalized,
+                    meta: response?.data?.meta || null,
+                };
             } catch (err) {
                 const message =
                     err.response?.data?.message || "Erreur lors du chargement de la fréquence cardiaque";
@@ -42,7 +60,7 @@ export function useHeartRate() {
 
             try {
                 const response = await client.post("/api/heart-rate", heartRateData);
-                const newRecord = response.data.data;
+                const newRecord = normalizeHeartRateRecord(response?.data?.data || {});
                 setHeartRateRecords((prev) => [newRecord, ...prev]);
                 return { success: true, data: newRecord };
             } catch (err) {
