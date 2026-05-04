@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  namespace: health-platform
+data:
+  DB_HOST: "mysql"
+  DB_PORT: "3306"
+  DB_NAME: "health_db"
+  NODE_ENV: "production"
+  PORT: "4000"
+  JWT_EXPIRES_IN: "24h"
