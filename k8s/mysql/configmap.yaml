@@ -1,0 +1,124 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-init-schema
+  namespace: health-platform
+data:
+  schema.sql: |
+    DROP TABLE IF EXISTS anomalies;
+    DROP TABLE IF EXISTS heart_rate;
+    DROP TABLE IF EXISTS sleep_records;
+    DROP TABLE IF EXISTS activities;
+    DROP TABLE IF EXISTS users;
+
+    CREATE TABLE users (
+        user_id INT AUTO_INCREMENT PRIMARY KEY,
+        username VARCHAR(50) UNIQUE NOT NULL,
+        email VARCHAR(100) UNIQUE NOT NULL,
+        password_hash VARCHAR(255) NOT NULL,
+        first_name VARCHAR(50),
+        last_name VARCHAR(50),
+        age INT CHECK (age >= 18 AND age <= 120),
+        gender ENUM('M', 'F', 'Other'),
+        weight_kg FLOAT CHECK (weight_kg > 0),
+        height_cm FLOAT CHECK (height_cm > 0 AND height_cm < 300),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_username (username),
+        INDEX idx_email (email)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+    CREATE TABLE activities (
+        activity_id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        activity_type ENUM('running', 'walking', 'cycling', 'gym', 'swimming', 'yoga', 'other') NOT NULL,
+        distance_km FLOAT CHECK (distance_km >= 0),
+        duration_minutes INT CHECK (duration_minutes > 0) NOT NULL,
+        calories_burned INT CHECK (calories_burned >= 0),
+        steps INT CHECK (steps >= 0),
+        avg_heart_rate INT CHECK (avg_heart_rate > 0 AND avg_heart_rate < 250),
+        max_heart_rate INT CHECK (max_heart_rate > 0 AND max_heart_rate < 250),
+        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        notes TEXT,
+        FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+        INDEX idx_user_id (user_id),
+        INDEX idx_timestamp (timestamp),
+        INDEX idx_activity_type (activity_type)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+    CREATE TABLE sleep_records (
+        sleep_id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        sleep_date DATE NOT NULL,
+        total_hours FLOAT CHECK (total_hours >= 0 AND total_hours <= 24),
+        deep_sleep_hours FLOAT CHECK (deep_sleep_hours >= 0),
+        light_sleep_hours FLOAT CHECK (light_sleep_hours >= 0),
+        rem_sleep_hours FLOAT CHECK (rem_sleep_hours >= 0),
+        awakenings INT CHECK (awakenings >= 0),
+        quality_score INT CHECK (quality_score >= 0 AND quality_score <= 100),
+        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        notes TEXT,
+        UNIQUE KEY uk_user_sleep_date (user_id, sleep_date),
+        FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+        INDEX idx_user_id (user_id),
+        INDEX idx_sleep_date (sleep_date)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+    CREATE TABLE heart_rate (
+        hr_id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        bpm INT NOT NULL CHECK (bpm > 0 AND bpm < 250),
+        context ENUM('resting', 'exercising', 'sleeping', 'stressed', 'other') DEFAULT 'other',
+        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+        INDEX idx_user_id (user_id),
+        INDEX idx_timestamp (timestamp),
+        INDEX idx_context (context)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+    CREATE TABLE anomalies (
+        anomaly_id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        type ENUM('heart_rate', 'sleep', 'activity') NOT NULL,
+        severity ENUM('low', 'medium', 'high') NOT NULL,
+        detected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        description TEXT NOT NULL,
+        related_id INT,
+        is_read BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+        INDEX idx_user_id (user_id),
+        INDEX idx_type (type),
+        INDEX idx_severity (severity),
+        INDEX idx_is_read (is_read),
+        INDEX idx_detected_at (detected_at),
+        UNIQUE KEY uk_anomaly_dedup (user_id, type, severity, description(100), (DATE(detected_at)))
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+    CREATE OR REPLACE VIEW user_stats AS
+    SELECT
+        u.user_id, u.username, u.email,
+        COUNT(DISTINCT a.activity_id) as total_activities,
+        COALESCE(SUM(a.steps), 0) as total_steps,
+        COALESCE(SUM(a.calories_burned), 0) as total_calories,
+        COALESCE(AVG(s.total_hours), 0) as avg_sleep_hours,
+        COALESCE(AVG(s.quality_score), 0) as avg_sleep_quality,
+        COUNT(DISTINCT an.anomaly_id) as total_anomalies
+    FROM users u
+    LEFT JOIN activities a ON u.user_id = a.user_id
+    LEFT JOIN sleep_records s ON u.user_id = s.user_id
+    LEFT JOIN anomalies an ON u.user_id = an.user_id AND an.is_read = FALSE
+    GROUP BY u.user_id, u.username, u.email;
+
+    CREATE OR REPLACE VIEW daily_activity_summary AS
+    SELECT
+        user_id,
+        DATE(timestamp) as activity_date,
+        COUNT(*) as num_activities,
+        SUM(steps) as total_steps,
+        SUM(calories_burned) as total_calories,
+        SUM(duration_minutes) as total_duration_minutes,
+        AVG(avg_heart_rate) as avg_heart_rate
+    FROM activities
+    GROUP BY user_id, DATE(timestamp)
+    ORDER BY activity_date DESC;
