@@ -93,3 +93,24 @@ suivi de la performance
 visualisation temps réel
 support à la prise de décision
 meilleure fiabilité applicative
+
+### Observabilité des logs
+
+En complément des métriques Prometheus, nous avons ajouté Loki et Promtail afin de centraliser les logs applicatifs.
+
+- Promtail collecte automatiquement les logs des containers Docker.
+- Loki stocke et indexe les logs.
+- Grafana permet d’explorer les logs et de les corréler avec les métriques.
+
+### SLI liés aux logs
+
+- Nombre de logs d’erreur sur 5 minutes
+- Volume de logs par container
+- Présence d’erreurs backend
+- Corrélation entre pic d’erreurs HTTP et logs applicatifs
+
+### SLO logs
+
+- Objectif : aucune erreur applicative critique persistante sur une fenêtre de 5 minutes
+- Métrique Loki : nombre de logs contenant "error"
+- Alerte : déclenchée si au moins une erreur est détectée sur 5 minutes
