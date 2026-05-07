@@ -18,3 +18,9 @@ backend/dist
 
 backend/coverage/
 .env.production
+
+# Terraform
+terraform/.terraform/
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+terraform/terraform.tfvars
